@@ -4,7 +4,12 @@ import { Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 export default function SignUpSuccessScreen() {
   const router = useRouter();
-  const { fullName, email } = useLocalSearchParams();
+  const { fullName, email, role } = useLocalSearchParams();
+
+  // Decode the URL-encoded params
+  const decodedFullName = fullName ? decodeURIComponent(fullName as string) : '';
+  const decodedEmail = email ? decodeURIComponent(email as string) : '';
+  const userRole = role as 'user' | 'admin';
 
   const handleContinue = () => {
     // Navigate to login or dashboard
@@ -17,14 +22,13 @@ export default function SignUpSuccessScreen() {
       <View style={styles.logoContainer}>
         <View style={styles.logoCircle}>
           <Image 
-            source={require('@/assets/images/tutguide.png')}
+            source={require('@/assets/images/tutguide1.png')}
             style={styles.logoImage}
             resizeMode="contain"
           />
         </View>
         <View style={styles.logoTextContainer}>
           <ThemedText style={styles.logoTextMain}>TUTGuide</ThemedText>
-          <ThemedText style={styles.logoTextSub}>MAPS</ThemedText>
         </View>
       </View>
 
@@ -32,16 +36,20 @@ export default function SignUpSuccessScreen() {
         <ThemedText style={styles.successTitle}>Account Created Successfully!</ThemedText>
         
         <View style={styles.userInfo}>
-          <ThemedText style={styles.userInfoText}>Name: {fullName}</ThemedText>
-          <ThemedText style={styles.userInfoText}>Email: {email}</ThemedText>
+          <ThemedText style={styles.userInfoText}>Name: {decodedFullName}</ThemedText>
+          <ThemedText style={styles.userInfoText}>Email: {decodedEmail}</ThemedText>
+          <ThemedText style={styles.userInfoText}>
+            Role: {userRole === 'admin' ? 'Administrator' : 'User'}
+          </ThemedText>
         </View>
 
         <ThemedText style={styles.successMessage}>
-          Your TUTGuide Maps account has been successfully created. You can now sign in to access all features.
+          Your TUTGuide Maps account has been successfully created as a {userRole === 'admin' ? 'Administrator' : 'User'}. 
+          You can now sign in to access all features.
         </ThemedText>
 
         <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
-          <ThemedText style={styles.continueButtonText} >CONTINUE TO SIGN IN</ThemedText>
+          <ThemedText style={styles.continueButtonText}>CONTINUE TO SIGN IN</ThemedText>
         </TouchableOpacity>
       </View>
     </View>
@@ -87,14 +95,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
-  logoTextSub: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
-  },
   successContainer: {
     backgroundColor: 'rgba(159, 195, 195, 0.8)',
     padding: 20,
@@ -119,6 +119,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#2e4b6d',
     marginBottom: 8,
+    fontWeight: '500',
   },
   successMessage: {
     fontSize: 16,

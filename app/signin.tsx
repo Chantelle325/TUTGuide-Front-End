@@ -5,28 +5,29 @@ import React, { useEffect, useState } from 'react';
 import {
   Alert,
   Image,
-  ImageBackground,
   Platform,
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+
 
 export default function DashboardScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ username?: string | string[] }>();
   const [searchQuery, setSearchQuery] = useState('');
+
   const [region, setRegion] = useState({
-    latitude: -25.7579,
-    longitude: 28.2311,
+    latitude: -25.54053,
+    longitude: 28.09529,
     latitudeDelta: 0.005,
     longitudeDelta: 0.005,
   });
+
   const [hasLocationPermission, setHasLocationPermission] = useState(false);
 
-  // Facilities at TUT South Campus
   const locations = [
     { name: 'Library', latitude: -25.7579, longitude: 28.2311 },
     { name: 'Engineering Labs', latitude: -25.7582, longitude: 28.2320 },
@@ -36,7 +37,6 @@ export default function DashboardScreen() {
     { name: 'Parking Area', latitude: -25.7583, longitude: 28.2309 },
   ];
 
-  // Request location permission and get user location
   useEffect(() => {
     (async () => {
       if (Platform.OS !== 'web') {
@@ -61,18 +61,15 @@ export default function DashboardScreen() {
     })();
   }, []);
 
-  // Filter locations based on search
   const filteredLocations = locations.filter(loc =>
     loc.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-
     const results = locations.filter(loc =>
       loc.name.toLowerCase().includes(query.toLowerCase())
     );
-
     if (query && results.length > 0) {
       setRegion({
         latitude: results[0].latitude,
@@ -90,54 +87,57 @@ export default function DashboardScreen() {
   };
 
   return (
-    <ImageBackground
-      source={require('@/assets/images/tutmap.png')}
-      style={styles.background}
-      resizeMode="cover"
-    >
-      <View style={styles.overlay}>
+    <View style={{ flex: 1 }}>
+      {/* Map fills entire screen */}
+      <MapView
+        provider={PROVIDER_GOOGLE}
+        style={StyleSheet.absoluteFillObject}
+        region={region}
+        onRegionChangeComplete={setRegion}
+        showsUserLocation={hasLocationPermission}
+        showsMyLocationButton={true}
+      >
+        {filteredLocations.map(loc => (
+          <Marker
+            key={loc.name}
+            coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
+            title={loc.name}
+            pinColor="red"
+          />
+        ))}
+      </MapView>
+
+      {/* Overlay elements */}
+      <View style={styles.overlayContent}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.logoSection}>
             <View style={styles.logoCircle}>
               <Image
-                source={require('@/assets/images/tutguide.png')}
+                source={require('@/assets/images/tutguide1.png')}
                 style={styles.logoImage}
                 resizeMode="contain"
               />
             </View>
             <View style={styles.logoTextContainer}>
               <ThemedText style={styles.logoTextMain}>TUTGuide</ThemedText>
-              <ThemedText style={styles.logoTextSub}>MAPS</ThemedText>
             </View>
           </View>
 
           <View style={styles.iconsSection}>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => router.push('/Report')}
-            >
-              <Image
-                source={require('@/assets/images/messageicon.png')}
-                style={styles.headerIcon}
-              />
+            <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/Report')}>
+              <Image source={require('@/assets/images/messageicon.png')} style={styles.headerIcon} />
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={() => router.push('/profile')}
-            >
-              <Image
-                source={require('@/assets/images/profile.png')}
-                style={styles.headerIcon}
-              />
+            <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/profile')}>
+              <Image source={require('@/assets/images/profile.png')} style={styles.headerIcon} />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Welcome Text */}
+        {/* Welcome text */}
         <ThemedText style={styles.welcomeText}>WELCOME</ThemedText>
 
-        {/* Search Bar */}
+        {/* Search bar */}
         <TextInput
           style={styles.searchInput}
           placeholder="Search for a facility..."
@@ -147,75 +147,36 @@ export default function DashboardScreen() {
           onSubmitEditing={handleSubmitSearch}
         />
 
-        {/* Map */}
-        <View style={styles.content}>
-          <MapView
-            style={StyleSheet.absoluteFillObject}
-            region={region}
-            onRegionChangeComplete={setRegion}
-            showsUserLocation={hasLocationPermission}
-            showsMyLocationButton={true}
-          >
-            {filteredLocations.map(loc => (
-              <Marker
-                key={loc.name}
-                coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
-                title={loc.name}
-                pinColor="#ffa500"
-              />
-            ))}
-          </MapView>
-        </View>
-
         {/* Footer */}
         <View style={styles.footer}>
-          <TouchableOpacity
-            style={[styles.tab, styles.activeTab]}
-            onPress={() => router.push('/map')}
-          >
+          <TouchableOpacity style={[styles.tab, styles.activeTab]} onPress={() => router.push('/map')}>
             <View style={styles.tabContent}>
-              <Image
-                source={require('@/assets/images/location.png')}
-                style={styles.tabIcon}
-              />
+              <Image source={require('@/assets/images/location.png')} style={styles.tabIcon} />
               <ThemedText style={[styles.tabText, styles.activeTabText]}>Map</ThemedText>
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.tab}
-            onPress={() => router.push('/saved')}
-          >
+          <TouchableOpacity style={styles.tab} onPress={() => router.push('/saved')}>
             <View style={styles.tabContent}>
-              <Image
-                source={require('@/assets/images/home.png')}
-                style={styles.tabIcon}
-              />
+              <Image source={require('@/assets/images/home.png')} style={styles.tabIcon} />
               <ThemedText style={styles.tabText}>Saved places</ThemedText>
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.tab}
-            onPress={() => router.push('/settings')}
-          >
+          <TouchableOpacity style={styles.tab} onPress={() => router.push('/settings')}>
             <View style={styles.tabContent}>
-              <Image
-                source={require('@/assets/images/settings.png')}
-                style={styles.tabIcon}
-              />
+              <Image source={require('@/assets/images/settings.png')} style={styles.tabIcon} />
               <ThemedText style={styles.tabText}>Settings</ThemedText>
             </View>
           </TouchableOpacity>
         </View>
       </View>
-    </ImageBackground>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  background: { flex: 1, width: '100%', height: '100%' },
-  overlay: { flex: 1, backgroundColor: 'rgba(90, 127, 153, 0.85)', paddingBottom: 70 },
+  overlayContent: { flex: 1 }, // fully transparent overlay
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -241,10 +202,8 @@ const styles = StyleSheet.create({
   logoImage: { width: 30, height: 30 },
   logoTextContainer: { alignItems: 'flex-start' },
   logoTextMain: { fontSize: 22, fontWeight: 'bold', color: '#ffa500', textShadowColor: 'rgba(0,0,0,0.3)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 2 },
-  logoTextSub: { fontSize: 22, fontWeight: 'bold', color: '#fff', textShadowColor: 'rgba(0,0,0,0.3)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 2 },
   welcomeText: { fontSize: 20, fontWeight: 'bold', color: '#ffa500', textShadowColor: 'rgba(0,0,0,0.3)', textShadowOffset: { width: 2, height: 2 }, textShadowRadius: 2, marginBottom: 20, textAlign:'center' },
   searchInput: { width: '100%', padding: 15, borderWidth: 2, borderColor: '#ffa500', borderRadius: 25, marginBottom: 30, fontSize: 16, backgroundColor: 'rgba(159, 195, 195, 0.7)', color: '#2e4b6d', fontWeight: '500', paddingLeft: 20 },
-  content: { flex: 1, borderRadius: 20, overflow: 'hidden', marginBottom: 60 },
   footer: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 15, borderTopWidth: 2, borderTopColor: '#ffa500', backgroundColor: 'rgba(46, 75, 109, 0.8)' },
   tab: { alignItems: 'center', padding: 10, flex: 1 },
   activeTab: { borderTopWidth: 3, borderTopColor: '#ffa500' },

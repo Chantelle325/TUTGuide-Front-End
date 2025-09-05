@@ -1,7 +1,20 @@
 import { ThemedText } from '@/components/ThemedText';
+import axios from 'axios';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { Alert, Image, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, Image, Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+
+// Conditional import for Picker
+let PickerComponent: any;
+try {
+  PickerComponent = require('@react-native-picker/picker').Picker;
+} catch (error) {
+  try {
+    PickerComponent = require('react-native').Picker;
+  } catch (e) {
+    console.error('No Picker component available');
+  }
+}
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -9,36 +22,40 @@ export default function SignUpScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState<'user' | 'admin'>('user');
 
-  const handleSignUp = () => {
-    if (!fullName.trim()) {
-      Alert.alert('Error', 'Please enter your full name');
-      return;
+  const API_URL = "https://ismabasa123.loca.lt/api/auth"; // Replace with your backend URL
+
+  const handleSignUp = async () => {
+    if (!fullName.trim()) return Alert.alert('Error', 'Please enter your full name');
+    if (!email.trim()) return Alert.alert('Error', 'Please enter your email');
+    if (password !== confirmPassword) return Alert.alert('Error', 'Passwords do not match');
+    if (password.length < 6) return Alert.alert('Error', 'Password must be at least 6 characters');
+
+    try {
+      // Send registration data to backend
+      const response = await axios.post(`${API_URL}/register`, {
+        fullName,
+        email,
+        password,
+        role,
+      });
+
+      Alert.alert("Success", response.data.message || "Account created!");
+      
+      // Navigate to OTP verification screen with encoded params
+      router.push({
+        pathname: '/verify-code',
+        params: { 
+          fullName: encodeURIComponent(fullName), 
+          email: encodeURIComponent(email), 
+          role 
+        },
+      });
+    } catch (err: any) {
+      console.error(err.response?.data || err.message);
+      Alert.alert("Error", err.response?.data?.message || "Registration failed");
     }
-
-    if (!email.trim()) {
-      Alert.alert('Error', 'Please enter your email');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return;
-    }
-
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
-      return;
-    }
-
-    // Navigate to success screen with user data
-    router.push({
-      pathname: '/signup-success',
-      params: { 
-        fullName: fullName.trim(),
-        email: email.trim()
-      }
-    });
   };
 
   return (
@@ -47,19 +64,21 @@ export default function SignUpScreen() {
       <View style={styles.logoContainer}>
         <View style={styles.logoCircle}>
           <Image 
-            source={require('@/assets/images/tutguide.png')}
+            source={require('@/assets/images/tutguide1.png')}
             style={styles.logoImage}
             resizeMode="contain"
           />
         </View>
         <View style={styles.logoTextContainer}>
           <ThemedText style={styles.logoTextMain}>TUTGuide</ThemedText>
-          <ThemedText style={styles.logoTextSub}>MAPS</ThemedText>
         </View>
       </View>
 
-      <ThemedText style={styles.title}>Create your TUTGuide account to start navigating</ThemedText>
+      <ThemedText style={styles.title}>
+        Create your TUTGuide account to start navigating
+      </ThemedText>
 
+      {/* Full Name */}
       <ThemedText style={styles.inputLabel}>FULL NAME:</ThemedText>
       <TextInput
         style={styles.input}
@@ -69,6 +88,7 @@ export default function SignUpScreen() {
         onChangeText={setFullName}
       />
 
+      {/* Email */}
       <ThemedText style={styles.inputLabel}>EMAIL ADDRESS:</ThemedText>
       <TextInput
         style={styles.input}
@@ -80,6 +100,30 @@ export default function SignUpScreen() {
         autoCapitalize="none"
       />
 
+      {/* Role Dropdown */}
+      <ThemedText style={styles.inputLabel}>SIGN UP AS:</ThemedText>
+      <View style={styles.pickerContainer}>
+        {PickerComponent ? (
+          <PickerComponent
+            selectedValue={role}
+            onValueChange={(value: any) => setRole(value)}
+            style={styles.picker}
+            dropdownIconColor="#2e4b6d"
+          >
+            <PickerComponent.Item label="User" value="user" />
+            <PickerComponent.Item label="Admin" value="admin" />
+          </PickerComponent>
+        ) : (
+          <TextInput
+            style={styles.input}
+            value={role}
+            editable={false}
+            placeholder="User (Picker not available)"
+          />
+        )}
+      </View>
+
+      {/* Password */}
       <ThemedText style={styles.inputLabel}>PASSWORD:</ThemedText>
       <TextInput
         style={styles.input}
@@ -90,6 +134,7 @@ export default function SignUpScreen() {
         secureTextEntry
       />
 
+      {/* Confirm Password */}
       <ThemedText style={styles.inputLabel}>CONFIRM PASSWORD:</ThemedText>
       <TextInput
         style={styles.input}
@@ -100,14 +145,19 @@ export default function SignUpScreen() {
         secureTextEntry
       />
 
+      {/* Sign Up Button */}
       <TouchableOpacity style={styles.button} onPress={handleSignUp}>
         <ThemedText type="defaultSemiBold" style={styles.buttonText}>
           SIGN UP
         </ThemedText>
       </TouchableOpacity>
 
+      {/* Go Back */}
       <TouchableOpacity onPress={() => router.back()}>
-        <ThemedText style={styles.backText}>Already have an account? <ThemedText style={styles.signInLink}>SIGN IN</ThemedText></ThemedText>
+        <ThemedText style={styles.backText}>
+          Already have an account?{' '}
+          <ThemedText style={styles.signInLink}>SIGN IN</ThemedText>
+        </ThemedText>
       </TouchableOpacity>
     </View>
   );
@@ -152,14 +202,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
-  logoTextSub: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
-  },
   title: { 
     fontSize: 18, 
     color: '#fff', 
@@ -182,6 +224,18 @@ const styles = StyleSheet.create({
     borderColor: '#ffa500', 
     color: '#2e4b6d',
     fontSize: 16 
+  },
+  pickerContainer: {
+    backgroundColor: '#9fc3c3',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ffa500',
+    marginBottom: 20,
+    overflow: 'hidden',
+  },
+  picker: {
+    color: '#2e4b6d',
+    height: Platform.OS === 'ios' ? 150 : 50,
   },
   button: { 
     backgroundColor: '#ffa500', 
