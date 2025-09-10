@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("Dashboard");
@@ -20,7 +20,15 @@ export default function AdminDashboard() {
             <Text style={styles.headerSubtitle}>Manage your app</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.logoutButton}>
+         <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={() => {
+            Alert.alert("Confirm Logout", "Are you sure you want to log out?", [
+              { text: "Cancel", style: "cancel" },
+              { text: "Log Out", onPress: () => router.replace("/") },
+            ]);
+          }}
+        >
           <Ionicons name="log-out-outline" size={20} color="#FFA500" />
         </TouchableOpacity>
       </View>

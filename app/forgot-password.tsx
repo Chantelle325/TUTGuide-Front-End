@@ -1,26 +1,42 @@
-// app/forgot-password.tsx
 import { ThemedText } from '@/components/ThemedText';
+import axios from 'axios';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, TextInput, TouchableOpacity, View } from 'react-native';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
+  const router = useRouter();
 
-  const handleRequestReset = () => {
-    if (!email.trim()) {
-      Alert.alert('Error', 'Please enter your email');
-      return;
+  const API_URL = "https://ismabasa123.loca.lt/api";
+
+  const handleRequestCode = async () => {
+    if (!email.trim()) return Alert.alert('Error', 'Please enter your email');
+
+    try {
+      const response = await axios.post(`${API_URL}/forgot-password`, { email });
+      if (response.data.success) {
+        Alert.alert('Success', `OTP sent to ${email}`);
+        // 👉 Go to verify screen and pass email as param
+        router.push({
+          pathname: '/verify-otp',
+          params: { email },
+        });
+      }
+    } catch (err: any) {
+      console.error(err.response?.data || err.message);
+      Alert.alert('Error', err.response?.data?.message || 'Failed to send OTP');
     }
-
-    // TODO: Call your backend API to send reset link or OTP
-    Alert.alert('Success', `Reset link sent to ${email}`);
   };
 
   return (
-    <View style={styles.container}>
-      <ThemedText style={styles.title}>Forgot Password</ThemedText>
+    <View style={{ flex: 1, justifyContent: 'center', padding: 20, backgroundColor: '#5a7f99' }}>
+      <ThemedText style={{ fontSize: 22, fontWeight: 'bold', color: '#fff', marginBottom: 20, textAlign: 'center' }}>
+        Forgot Password
+      </ThemedText>
+
       <TextInput
-        style={styles.input}
+        style={{ backgroundColor: '#fff', padding: 12, borderRadius: 8, marginBottom: 20, fontSize: 16 }}
         placeholder="Enter your email"
         placeholderTextColor="#aaa"
         value={email}
@@ -28,17 +44,15 @@ export default function ForgotPassword() {
         autoCapitalize="none"
         keyboardType="email-address"
       />
-      <TouchableOpacity style={styles.button} onPress={handleRequestReset}>
-        <ThemedText style={styles.buttonText}>Send Reset Link</ThemedText>
+
+      <TouchableOpacity
+        style={{ backgroundColor: '#ffa500', padding: 15, borderRadius: 8, alignItems: 'center' }}
+        onPress={handleRequestCode}
+      >
+        <ThemedText style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
+          Send OTP
+        </ThemedText>
       </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 20, backgroundColor: '#5a7f99' },
-  title: { fontSize: 22, fontWeight: 'bold', color: '#fff', marginBottom: 20, textAlign: 'center' },
-  input: { backgroundColor: '#fff', padding: 12, borderRadius: 8, marginBottom: 20, fontSize: 16 },
-  button: { backgroundColor: '#ffa500', padding: 15, borderRadius: 8, alignItems: 'center' },
-  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-});
