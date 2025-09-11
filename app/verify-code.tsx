@@ -36,9 +36,10 @@ export default function VerifyCodeScreen() {
         },
       });
     } catch (err: any) {
-      console.error(err.response?.data || err.message);
-      Alert.alert("Error", err.response?.data?.message || "Verification failed");
-    }
+    console.log("Verification error:", err.response?.data || err.message);
+    Alert.alert("Error", err.response?.data?.message || "Verification failed");
+}
+
   };
 
   return (

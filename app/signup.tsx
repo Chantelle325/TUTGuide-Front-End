@@ -1,4 +1,5 @@
 import { ThemedText } from '@/components/ThemedText';
+import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -34,6 +35,10 @@ export default function SignUpScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<'user' | 'admin'>('user');
 
+  // Password visibility states
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const API_URL = "https://ismabasa123.loca.lt/api/auth";
 
   const handleSignUp = async () => {
@@ -59,10 +64,9 @@ export default function SignUpScreen() {
           role 
         },
       });
-    } catch (err: any) {
-      console.error(err.response?.data || err.message);
-      Alert.alert("Error", err.response?.data?.message || "Registration failed");
-    }
+ } catch (err: any) { 
+   console.log("Registration error:", err.response?.data || err.message);
+   Alert.alert("Error", err.response?.data?.message || "Registration failed"); }
   };
 
   return (
@@ -139,24 +143,48 @@ export default function SignUpScreen() {
           </View>
 
           <ThemedText style={styles.inputLabel}>PASSWORD:</ThemedText>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your password"
-            placeholderTextColor="#c0d9d9"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your password"
+              placeholderTextColor="#c0d9d9"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+            />
+            <TouchableOpacity
+              style={styles.eyeIcon}
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              <Ionicons
+                name={showPassword ? 'eye' : 'eye-off'}
+                size={24}
+                color="#2e4b6d"
+              />
+            </TouchableOpacity>
+          </View>
 
           <ThemedText style={styles.inputLabel}>CONFIRM PASSWORD:</ThemedText>
-          <TextInput
-            style={styles.input}
-            placeholder="Confirm your password"
-            placeholderTextColor="#c0d9d9"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-          />
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Confirm your password"
+              placeholderTextColor="#c0d9d9"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry={!showConfirmPassword}
+            />
+            <TouchableOpacity
+              style={styles.eyeIcon}
+              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              <Ionicons
+                name={showConfirmPassword ? 'eye' : 'eye-off'}
+                size={24}
+                color="#2e4b6d"
+              />
+            </TouchableOpacity>
+          </View>
 
           <TouchableOpacity style={styles.button} onPress={handleSignUp}>
             <ThemedText type="defaultSemiBold" style={styles.buttonText}>
@@ -184,9 +212,11 @@ const styles = StyleSheet.create({
   logoTextMain: { fontSize: 28, fontWeight: 'bold', color: '#ffa500' },
   title: { fontSize: 18, color: '#fff', textAlign: 'center', marginBottom: 30, fontWeight: '500' },
   inputLabel: { fontSize: 16, marginBottom: 8, color: '#fff', fontWeight: 'bold' },
-  input: { backgroundColor: '#9fc3c3', padding: 12, borderRadius: 8, marginBottom: 20, borderWidth: 1, borderColor: '#ffa500', color: '#2e4b6d', fontSize: 16 },
+  input: { backgroundColor: '#9fc3c3', padding: 12, borderRadius: 8, marginBottom: 0, borderWidth: 1, borderColor: '#ffa500', color: '#2e4b6d', fontSize: 16 },
   pickerContainer: { backgroundColor: '#9fc3c3', borderRadius: 8, borderWidth: 1, borderColor: '#ffa500', marginBottom: 20, overflow: 'hidden' },
   picker: { color: '#2e4b6d', height: Platform.OS === 'ios' ? 150 : 50 },
+  passwordContainer: { position: 'relative', marginBottom: 20 },
+  eyeIcon: { position: 'absolute', right: 10, top: '35%' },
   button: { backgroundColor: '#ffa500', padding: 15, borderRadius: 8, alignItems: 'center', marginTop: 10, marginBottom: 20 },
   buttonText: { color: '#2e4b6d', fontWeight: 'bold', fontSize: 18 },
   backText: { color: '#fff', textAlign: 'center' },

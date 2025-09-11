@@ -19,7 +19,7 @@ export default function ResetPassword() {
       Alert.alert('Error', 'Passwords do not match');
       return;
     }
-
+     
     // TODO: Call backend API to save new password
     Alert.alert('Success', `Password updated for ${email}`);
     router.push('/'); // send back to login

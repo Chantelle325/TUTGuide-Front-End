@@ -23,10 +23,11 @@ export default function ForgotPassword() {
           params: { email },
         });
       }
-    } catch (err: any) {
-      console.error(err.response?.data || err.message);
-      Alert.alert('Error', err.response?.data?.message || 'Failed to send OTP');
-    }
+   } catch (err: any) {
+  console.log('OTP error:', err.response?.data || err.message);
+  Alert.alert('Error', err.response?.data?.message || 'Failed to send OTP');
+}
+
   };
 
   return (

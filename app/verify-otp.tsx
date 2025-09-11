@@ -30,10 +30,11 @@ export default function VerifyOtp() {
         Alert.alert('Success', 'OTP verified! You can now reset your password.');
         setVerified(true);
       }
-    } catch (err: any) {
-      console.error(err.response?.data || err.message);
-      Alert.alert('Error', err.response?.data?.message || 'Invalid OTP');
-    }
+   } catch (err: any) {
+    console.log("OTP verification error:", err.response?.data || err.message);
+    Alert.alert("Error", err.response?.data?.message || "Invalid OTP");
+}
+
   };
 
   const handleResetPassword = async () => {
