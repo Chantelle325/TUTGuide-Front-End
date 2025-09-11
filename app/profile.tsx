@@ -51,7 +51,7 @@ const ProfileScreen = () => {
   const [clickSound, setClickSound] = useState<Audio.Sound | null>(null);
 
  useEffect(() => {
-  const initialEmail = (paramEmail as string) || 'guest@example.com';
+  const initialEmail = (paramEmail as string) ;
   const initialName = (paramName as string) || extractNameFromEmail(initialEmail);
 
   setUserData({
@@ -135,7 +135,7 @@ const ProfileScreen = () => {
 
   try {
     const response = await axios.put(
-      `${API_URL}/update/${userData._id}/profile-image`,
+      `${API_URL}/users/update/profilePic${userData._id}/profile-image`,
       formData,
       {
         headers: {
@@ -161,7 +161,7 @@ const ProfileScreen = () => {
   if (!newName.trim()) return Alert.alert('Error', 'Please enter your name');
 
   try {
-    const response = await axios.put(`${API_URL}/update/${userData._id}`, {
+    const response = await axios.put(`${API_URL}/users/update/${userData._id}`, {
       name: newName,
       email: userData.email, // include existing email if backend requires full object
     });
@@ -186,7 +186,7 @@ const ProfileScreen = () => {
       if (newEmail !== confirmEmail) return Alert.alert('Error', 'Emails do not match');
 
       try {
-        const response = await axios.put(`${API_URL}/update`, {
+        const response = await axios.put(`${API_URL}/users/update`, {
           oldEmail: userData.email,
           newEmail,
         });
@@ -214,7 +214,7 @@ const ProfileScreen = () => {
         return Alert.alert('Error', 'Passwords do not match');
 
       try {
-        const response = await axios.put(`${API_URL}/update`, {
+        const response = await axios.put(`${API_URL}/users/update`, {
           oldEmail: userData.email,
           currentPassword,
           password: newPassword,
