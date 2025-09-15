@@ -11,7 +11,7 @@ export default function ReportScreen() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const API_URL = "https://ismabasa123.loca.lt/feedback";
+  const API_URL = "https://ismabasamirenda123.loca.lt/feedback";
 
   useEffect(() => {
     AsyncStorage.getItem('userToken').then(storedToken => {

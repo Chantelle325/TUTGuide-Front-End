@@ -19,7 +19,7 @@ export default function VerifyOtp() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const API_URL = "https://ismabasa123.loca.lt/api";
+  const API_URL = "https://ismabasamirenda123.loca.lt/api";
 
   const handleVerifyCode = async () => {
     if (!otp.trim()) return Alert.alert('Error', 'Please enter the OTP');

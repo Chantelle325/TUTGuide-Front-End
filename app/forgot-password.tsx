@@ -8,7 +8,7 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const router = useRouter();
 
-  const API_URL = "https://ismabasa123.loca.lt/api";
+  const API_URL = "https://ismabasamirenda123.loca.lt/api";
 
   const handleRequestCode = async () => {
     if (!email.trim()) return Alert.alert('Error', 'Please enter your email');

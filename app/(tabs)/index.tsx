@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, ImageBackground, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
-const API_URL = "https://ismabasa123.loca.lt/api/auth";
+const API_URL = "https://ismabasamirenda123.loca.lt/api/auth";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -20,6 +20,7 @@ export default function LoginScreen() {
 
     try {
       const response = await axios.post(`${API_URL}/login`, { email: email.trim(), password });
+      console.log(response);
       const { user, token, message } = response.data;
 
       if (!user || !user.role || !token) {
@@ -38,7 +39,7 @@ export default function LoginScreen() {
       if (user.role === 'admin') {
         router.replace('/admin');
       } else {
-        router.replace('/Report');
+        router.replace('/signin');
       }
 
     } catch (err: any) {

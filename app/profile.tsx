@@ -18,7 +18,7 @@ import {
   View,
 } from 'react-native';
 
-const API_URL = 'https://ismabasa123.loca.lt/api';
+const API_URL = 'https://ismabasamirenda123.loca.lt/api';
 
 const ProfileScreen = () => {
   const router = useRouter();
@@ -50,9 +50,11 @@ const ProfileScreen = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [clickSound, setClickSound] = useState<Audio.Sound | null>(null);
 
- useEffect(() => {
-  const initialEmail = (paramEmail as string) ;
-  const initialName = (paramName as string) || extractNameFromEmail(initialEmail);
+useEffect(() => {
+  const initialEmail = typeof paramEmail === "string" ? paramEmail : "chantellemmathabo4@gmail.com";
+  const initialName = typeof paramName === "string" 
+    ? paramName 
+    : extractNameFromEmail(initialEmail);
 
   setUserData({
     _id: '12345',
@@ -62,7 +64,6 @@ const ProfileScreen = () => {
   });
   setNewName(initialName);
 
-  // async function inside useEffect
   const setup = async () => {
     await loadSound();
   };
@@ -75,11 +76,14 @@ const ProfileScreen = () => {
 
 
   const extractNameFromEmail = (email: string) => {
+      if (!email || !email.includes('@')) {
+    return "Chantelle";
+  }
     return email
-      .split('@')[0]
-      .split('.')
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(' ');
+    .split('@')[0]
+    .split('.')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
   };
 
   const loadSound = async () => {

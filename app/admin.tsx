@@ -12,7 +12,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   const router = useRouter();
-  const API_URL = "https://ismabasa123.loca.lt/feedback";
+  const API_URL = "https://ismabasamirenda123.loca.lt/feedback";
 
   // Load token from AsyncStorage
   useEffect(() => {

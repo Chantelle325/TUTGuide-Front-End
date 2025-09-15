@@ -13,7 +13,7 @@ export default function VerifyCodeScreen() {
   const router = useRouter();
   const [code, setCode] = useState('');
 
-  const API_URL = "https://ismabasa123.loca.lt/api/auth";
+  const API_URL = "https://ismabasamirenda123.loca.lt/api/auth";
 
   const handleVerify = async () => {
     if (!code.trim()) return Alert.alert("Error", "Please enter the verification code");

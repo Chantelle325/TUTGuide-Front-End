@@ -39,7 +39,7 @@ export default function SignUpScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const API_URL = "https://ismabasa123.loca.lt/api/auth";
+  const API_URL = "https://ismabasamirenda123.loca.lt/api/auth";
 
   const handleSignUp = async () => {
     if (!fullName.trim()) return Alert.alert('Error', 'Please enter your full name');
