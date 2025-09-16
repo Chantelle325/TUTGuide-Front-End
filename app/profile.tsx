@@ -265,6 +265,8 @@ const ProfileScreen = () => {
           {/* PERSONAL INFO */}
           <View style={styles.section}>
             <ThemedText style={styles.sectionTitle}>Personal Info</ThemedText>
+
+            {/* Name */}
             <TouchableOpacity
               style={styles.infoRow}
               onPress={() =>
@@ -283,6 +285,8 @@ const ProfileScreen = () => {
                 <Ionicons name="chevron-forward" size={20} color="#888" style={{ marginLeft: 5 }} />
               </View>
             </TouchableOpacity>
+
+            {/* Email */}
             <TouchableOpacity
               style={styles.infoRow}
               onPress={() =>
@@ -301,6 +305,26 @@ const ProfileScreen = () => {
                 <Ionicons name="chevron-forward" size={20} color="#888" style={{ marginLeft: 5 }} />
               </View>
             </TouchableOpacity>
+
+            {/* Change Password */}
+          <TouchableOpacity
+  style={styles.infoRow}
+  onPress={() => router.push('/change-password')}
+>
+  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <Ionicons
+      name="lock-closed-outline"
+      size={20}
+      color="#000"
+      style={{ marginRight: 10 }}
+    />
+    <ThemedText style={styles.infoLabel}>Change Password</ThemedText>
+  </View>
+  <View>
+    <Ionicons name="chevron-forward" size={20} color="#888" />
+  </View>
+</TouchableOpacity>
+
           </View>
 
           {/* SETTINGS */}
@@ -316,7 +340,6 @@ const ProfileScreen = () => {
               />
             </View>
             <View style={styles.switchRow}>
-              
               <ThemedText style={styles.switchLabel}>App Sounds</ThemedText>
               <Switch
                 value={soundEnabled}
