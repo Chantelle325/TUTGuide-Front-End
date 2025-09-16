@@ -1,22 +1,40 @@
+import Footer from '@/app/Footer';
 import { ThemedText } from '@/components/ThemedText';
+import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Keyboard,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 
 export default function ReportScreen() {
   const [report, setReport] = useState('');
   const [token, setToken] = useState('');
   const [loading, setLoading] = useState(true);
+  const [attachment, setAttachment] = useState<string | null>(null);
   const router = useRouter();
 
-  const API_URL = "https://ismabasamirenda123.loca.lt/feedback";
+  const MAX_LENGTH = 250;
+
+  const API_URL = 'https://ismabasamirenda123.loca.lt/feedback';
 
   useEffect(() => {
-    AsyncStorage.getItem('userToken').then(storedToken => {
+    AsyncStorage.getItem('userToken').then((storedToken) => {
       if (!storedToken) {
-        router.replace('/'); // redirect to login if no token
+        router.replace('/');
       } else {
         setToken(storedToken);
       }
@@ -24,58 +42,168 @@ export default function ReportScreen() {
     });
   }, []);
 
+  const pickFile = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        allowsEditing: true,
+        quality: 0.7,
+      });
+
+      if (!result.canceled) {
+        setAttachment(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('File pick error:', error);
+      Alert.alert('Error', 'Failed to pick file');
+    }
+  };
+
   const handleSubmit = async () => {
-    if (!report.trim()) {
-      Alert.alert("Error", "Please write your report before submitting.");
+    if (!report.trim() && !attachment) {
+      Alert.alert('Error', 'Please write a report or attach a file.');
       return;
     }
     if (!token) {
-      Alert.alert("Error", "No authorization token found.");
+      Alert.alert('Error', 'No authorization token found.');
       return;
     }
 
     try {
       const response = await axios.post(
         `${API_URL}/submit`,
-        { feedback_message: report },
+        { feedback_message: report, attachment },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.status === 201) {
-        Alert.alert("Success", "Your report has been sent to the admin.");
+        Alert.alert('Success', 'Your report has been sent to the admin.');
         setReport('');
+        setAttachment(null);
         router.back();
       }
     } catch (err: any) {
       console.error(err.response?.data || err.message);
-      Alert.alert("Error", err.response?.data?.message || "Failed to send report");
+      Alert.alert('Error', err.response?.data?.message || 'Failed to send report');
     }
   };
 
-  if (loading) return <ActivityIndicator size="large" color="#ffa500" style={{ flex: 1, justifyContent: 'center' }} />;
+  if (loading)
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#000" />
+      </View>
+    );
 
   return (
-    <View style={styles.container}>
-      <ThemedText style={styles.title}>Write a Report</ThemedText>
-      <TextInput
-        style={styles.textArea}
-        placeholder="Describe the issue or feedback..."
-        placeholderTextColor="#9fc3c3"
-        value={report}
-        onChangeText={setReport}
-        multiline
-      />
-      <TouchableOpacity style={[styles.submitButton, !token && { opacity: 0.5 }]} onPress={handleSubmit} disabled={!token}>
-        <Text style={styles.submitText}>Submit Report</Text>
-      </TouchableOpacity>
-    </View>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.wrapper}>
+          {/* HEADER */}
+          <View style={styles.header}>
+            <ThemedText style={styles.headerTitle}>Report an Issue</ThemedText>
+          </View>
+
+          {/* SCROLLABLE CONTENT */}
+          <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.textArea}
+                placeholder="Describe the issue or feedback..."
+                placeholderTextColor="#555"
+                value={report}
+                onChangeText={(text) => setReport(text.slice(0, MAX_LENGTH))}
+                multiline
+              />
+              <Text style={styles.charCount}>{MAX_LENGTH - report.length} </Text>
+
+              <TouchableOpacity onPress={pickFile} style={styles.iconWrapper}>
+                <Feather name="paperclip" size={22} color="#000" />
+              </TouchableOpacity>
+            </View>
+
+            {attachment && <Image source={{ uri: attachment }} style={styles.preview} />}
+
+            <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={!token}>
+              <ThemedText style={styles.submitText}>Submit Report</ThemedText>
+            </TouchableOpacity>
+          </ScrollView>
+
+          {/* FIXED FOOTER */}
+          <Footer />
+        </View>
+      </TouchableWithoutFeedback>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: 'rgba(90, 127, 153, 0.9)', padding: 20, justifyContent: 'flex-start', paddingTop: 80 },
-  title: { fontSize: 22, fontWeight: 'bold', color: '#ffa500', marginBottom: 20, textAlign: 'center' },
-  textArea: { height: 200, backgroundColor: 'rgba(159, 195, 195, 0.7)', borderRadius: 15, borderWidth: 2, borderColor: '#ffa500', padding: 15, fontSize: 16, color: '#2e4b6d', textAlignVertical: 'top' },
-  submitButton: { marginTop: 20, padding: 15, backgroundColor: '#ffa500', borderRadius: 25, alignItems: 'center' },
-  submitText: { fontSize: 16, fontWeight: 'bold', color: '#2e4b6d' }
+  wrapper: { flex: 1, backgroundColor: 'white' },
+  header: {
+    paddingTop: 50,
+    paddingBottom: 20,
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#000',
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 20,
+  },
+  inputContainer: {
+    position: 'relative',
+    marginBottom: 15,
+  },
+  textArea: {
+    height: 150,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 15,
+    fontSize: 16,
+    color: '#000',
+    textAlignVertical: 'top',
+    paddingRight: 40,
+  },
+  charCount: {
+    position: 'absolute',
+    left: 10,
+    bottom: 10,
+    fontSize: 12,
+    color: '#555',
+  },
+  iconWrapper: {
+    position: 'absolute',
+    right: 10,
+    bottom: 5,
+  },
+  preview: {
+    marginTop: 10,
+    width: 100,
+    height: 100,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  submitButton: {
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#000',
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  submitText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
 });

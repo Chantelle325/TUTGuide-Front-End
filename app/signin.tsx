@@ -1,32 +1,45 @@
 import { ThemedText } from '@/components/ThemedText';
+import { Feather } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
+  Animated,
+  Dimensions,
+  FlatList,
   Image,
   Platform,
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
+const { width: screenWidth } = Dimensions.get('window');
+const DRAWER_WIDTH = screenWidth * 0.75;
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ username?: string | string[] }>();
   const [searchQuery, setSearchQuery] = useState('');
-
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerAnim] = useState(new Animated.Value(-DRAWER_WIDTH));
   const [region, setRegion] = useState({
     latitude: -25.54053,
     longitude: 28.09529,
     latitudeDelta: 0.005,
     longitudeDelta: 0.005,
   });
-
   const [hasLocationPermission, setHasLocationPermission] = useState(false);
+
+  const [userName, setUserName] = useState('User');
+  const [userProfileImage, setUserProfileImage] = useState<string | null>(null);
+  const [savedPlaces, setSavedPlaces] = useState<
+    Array<{ name: string; latitude: number; longitude: number }>
+  >([]);
 
   const locations = [
     { name: 'Library', latitude: -25.7579, longitude: 28.2311 },
@@ -37,6 +50,20 @@ export default function DashboardScreen() {
     { name: 'Parking Area', latitude: -25.7583, longitude: 28.2309 },
   ];
 
+  // Load user info and saved places
+  useEffect(() => {
+    AsyncStorage.getItem('userName').then((name) => {
+      if (name) setUserName(name);
+    });
+    AsyncStorage.getItem('profileImage').then((uri) => {
+      if (uri) setUserProfileImage(uri);
+    });
+    AsyncStorage.getItem('savedPlaces').then((data) => {
+      if (data) setSavedPlaces(JSON.parse(data));
+    });
+  }, []);
+
+  // Location permissions
   useEffect(() => {
     (async () => {
       if (Platform.OS !== 'web') {
@@ -49,7 +76,6 @@ export default function DashboardScreen() {
           return;
         }
         setHasLocationPermission(true);
-
         const location = await Location.getCurrentPositionAsync({});
         setRegion({
           latitude: location.coords.latitude,
@@ -61,13 +87,13 @@ export default function DashboardScreen() {
     })();
   }, []);
 
-  const filteredLocations = locations.filter(loc =>
+  const filteredLocations = locations.filter((loc) =>
     loc.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    const results = locations.filter(loc =>
+    const results = locations.filter((loc) =>
       loc.name.toLowerCase().includes(query.toLowerCase())
     );
     if (query && results.length > 0) {
@@ -80,135 +106,262 @@ export default function DashboardScreen() {
     }
   };
 
-  const handleSubmitSearch = () => {
-    if (searchQuery.trim() && filteredLocations.length === 0) {
-      Alert.alert('No results', 'No facilities found matching your search');
+  const toggleDrawer = () => {
+    if (drawerOpen) {
+      Animated.timing(drawerAnim, {
+        toValue: -DRAWER_WIDTH,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => setDrawerOpen(false));
+    } else {
+      setDrawerOpen(true);
+      Animated.timing(drawerAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
     }
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      {/* Map fills entire screen */}
-      <MapView
-        provider={PROVIDER_GOOGLE}
-        style={StyleSheet.absoluteFillObject}
-        region={region}
-        onRegionChangeComplete={setRegion}
-        showsUserLocation={hasLocationPermission}
-        showsMyLocationButton={true}
-      >
-        {filteredLocations.map(loc => (
-          <Marker
-            key={loc.name}
-            coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
-            title={loc.name}
-            pinColor="red"
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+
+      <View style={{ flex: 1 }}>
+        <MapView
+          provider={PROVIDER_GOOGLE}
+          style={StyleSheet.absoluteFillObject}
+          region={region}
+          onRegionChangeComplete={setRegion}
+          showsUserLocation={hasLocationPermission}
+          showsMyLocationButton
+        >
+          {filteredLocations.map((loc) => (
+            <Marker
+              key={loc.name}
+              coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
+              title={loc.name}
+              pinColor="red"
+            />
+          ))}
+        </MapView>
+
+        {/* Hamburger Menu */}
+        <TouchableOpacity style={styles.menuButton} onPress={toggleDrawer}>
+          <Feather name="menu" size={28} color="black" />
+        </TouchableOpacity>
+
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search for a facility..."
+            placeholderTextColor="#555"
+            value={searchQuery}
+            onChangeText={handleSearch}
           />
-        ))}
-      </MapView>
-
-      {/* Overlay elements */}
-      <View style={styles.overlayContent}>
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.logoSection}>
-            <View style={styles.logoCircle}>
-              <Image
-                source={require('@/assets/images/tutguide1.png')}
-                style={styles.logoImage}
-                resizeMode="contain"
-              />
-            </View>
-            <View style={styles.logoTextContainer}>
-              <ThemedText style={styles.logoTextMain}>TUTGuide</ThemedText>
-            </View>
-          </View>
-
-          <View style={styles.iconsSection}>
-            <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/Report')}>
-              <Image source={require('@/assets/images/messageicon.png')} style={styles.headerIcon} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton} onPress={() => router.push('/profile')}>
-              <Image source={require('@/assets/images/profile.png')} style={styles.headerIcon} />
-            </TouchableOpacity>
-          </View>
         </View>
-
-        {/* Welcome text */}
-        <ThemedText style={styles.welcomeText}>WELCOME</ThemedText>
-
-        {/* Search bar */}
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search for a facility..."
-          placeholderTextColor="#9fc3c3"
-          value={searchQuery}
-          onChangeText={handleSearch}
-          onSubmitEditing={handleSubmitSearch}
-        />
 
         {/* Footer */}
         <View style={styles.footer}>
-          <TouchableOpacity style={[styles.tab, styles.activeTab]} onPress={() => router.push('/map')}>
+          <TouchableOpacity
+            style={[styles.tab, styles.activeTab]}
+            onPress={() => router.push('/signin')}
+          >
             <View style={styles.tabContent}>
-              <Image source={require('@/assets/images/location.png')} style={styles.tabIcon} />
+              <Feather name="map-pin" size={24} color="#9fc3c3" />
               <ThemedText style={[styles.tabText, styles.activeTabText]}>Map</ThemedText>
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.tab} onPress={() => router.push('/saved')}>
+          <TouchableOpacity style={styles.tab} onPress={() => router.push('/Report')}>
             <View style={styles.tabContent}>
-              <Image source={require('@/assets/images/home.png')} style={styles.tabIcon} />
-              <ThemedText style={styles.tabText}>Saved places</ThemedText>
+              <Feather name="message-square" size={24} color="#9fc3c3" />
+              <ThemedText style={styles.tabText}>Report</ThemedText>
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.tab} onPress={() => router.push('/settings')}>
+          <TouchableOpacity style={styles.tab} onPress={() => router.push('/profile')}>
             <View style={styles.tabContent}>
-              <Image source={require('@/assets/images/settings.png')} style={styles.tabIcon} />
-              <ThemedText style={styles.tabText}>Settings</ThemedText>
+              <Feather name="user" size={24} color="#9fc3c3" />
+              <ThemedText style={styles.tabText}>Account</ThemedText>
             </View>
           </TouchableOpacity>
         </View>
+
+        {/* Drawer Overlay */}
+        {drawerOpen && <TouchableWithoutFeedback onPress={toggleDrawer}>
+          <View style={styles.drawerOverlay} />
+        </TouchableWithoutFeedback>}
+
+        {/* Drawer */}
+        <Animated.View style={[styles.drawer, { transform: [{ translateX: drawerAnim }] }]}>
+          {/* Drawer Header */}
+          <View style={styles.drawerHeader}>
+            <TouchableOpacity style={styles.closeButton} onPress={toggleDrawer}>
+              <Feather name="x" size={28} color="#2e4b6d" />
+            </TouchableOpacity>
+
+            {userProfileImage ? (
+              <Image source={{ uri: userProfileImage }} style={styles.drawerProfileImage} />
+            ) : (
+              <View style={[styles.drawerProfileImage, { backgroundColor: '#ddd', justifyContent: 'center', alignItems: 'center' }]}>
+                <Feather name="user" size={40} color="#888" />
+              </View>
+            )}
+            <ThemedText style={styles.drawerName}>{userName}</ThemedText>
+          </View>
+
+          {/* Drawer Items */}
+          <TouchableOpacity style={styles.drawerItem} onPress={() => { router.push('/profile'); toggleDrawer(); }}>
+            <Feather name="user" size={20} color="#000" style={{ marginRight: 10 }} />
+            <ThemedText>Profile</ThemedText>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.drawerItem} onPress={() => { router.push('/about-us'); toggleDrawer(); }}>
+            <Feather name="info" size={20} color="#000" style={{ marginRight: 10 }} />
+            <ThemedText>About Us</ThemedText>
+          </TouchableOpacity>
+
+          {/* Saved Places */}
+          {savedPlaces.length > 0 && (
+            <ThemedText style={styles.savedPlacesTitle}>Saved Places</ThemedText>
+          )}
+          <FlatList
+            data={savedPlaces}
+            keyExtractor={(item) => item.name}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.drawerItem}
+                onPress={() => {
+                  setRegion({
+                    latitude: item.latitude,
+                    longitude: item.longitude,
+                    latitudeDelta: 0.005,
+                    longitudeDelta: 0.005,
+                  });
+                  toggleDrawer();
+                }}
+              >
+                <Feather name="map-pin" size={20} color="#000" style={{ marginRight: 10 }} />
+                <ThemedText>{item.name}</ThemedText>
+              </TouchableOpacity>
+            )}
+          />
+        </Animated.View>
       </View>
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  overlayContent: { flex: 1 }, // fully transparent overlay
-  header: {
+  menuButton: {
+    position: 'absolute',
+    top: 70,
+    left: 10,
+    backgroundColor: 'white',
+    padding: 8,
+    borderRadius: 8,
+    elevation: 5,
+  },
+
+  searchContainer: {
+    position: 'absolute',
+    left: 55,
+    right: 5,
+    top: 65,
+    zIndex: 10,
+  },
+
+  searchInput: {
+    width: '100%',
+    padding: 15,
+    borderWidth: 2,
+    borderColor: '#fff',
+    borderRadius: 25,
+    fontSize: 16,
+    backgroundColor: '#fff',
+    color: '#2e4b6d',
+    fontWeight: '500',
+    paddingLeft: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
+    paddingVertical: 5,
+    borderTopWidth: 2,
+    borderTopColor: '#eee',
+    backgroundColor: 'white',
+  },
+  tab: { alignItems: 'center', padding: 10, flex: 1 },
+  activeTab: { borderBottomWidth: 3, borderBottomColor: 'black' },
+  tabContent: { alignItems: 'center' },
+  tabText: { fontWeight: 'bold', fontSize: 14, color: '#9fc3c3', textTransform: 'uppercase' },
+  activeTabText: { color: 'black' },
+
+  drawer: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: DRAWER_WIDTH,
+    height: '100%',
+    backgroundColor: '#f5f5f5',
+    paddingTop: 40,
+    paddingHorizontal: 20,
+    zIndex: 20,
+  },
+  drawerOverlay: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    zIndex: 15,
+  },
+  drawerHeader: {
     alignItems: 'center',
     marginBottom: 30,
-    paddingVertical: 10,
-    borderBottomWidth: 2,
-    borderBottomColor: '#ffa500',
-    backgroundColor: 'rgba(46, 75, 109, 0.8)',
-    width: '100%',
-    paddingHorizontal: 25,
-    paddingBottom: 40,
   },
-  logoSection: { flexDirection: 'row', alignItems: 'center' },
-  iconsSection: { flexDirection: 'row', gap: 15 },
-  iconButton: { padding: 5 },
-  headerIcon: { width: 28, height: 28 },
-  logoCircle: {
-    width: 50, height: 50, borderRadius: 25,
-    backgroundColor: '#2e4b6d', justifyContent: 'center', alignItems: 'center',
-    marginRight: 12, borderWidth: 2, borderColor: '#ffa500',
+  drawerProfileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    marginBottom: 10,
   },
-  logoImage: { width: 30, height: 30 },
-  logoTextContainer: { alignItems: 'flex-start' },
-  logoTextMain: { fontSize: 22, fontWeight: 'bold', color: '#ffa500', textShadowColor: 'rgba(0,0,0,0.3)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 2 },
-  welcomeText: { fontSize: 20, fontWeight: 'bold', color: '#ffa500', textShadowColor: 'rgba(0,0,0,0.3)', textShadowOffset: { width: 2, height: 2 }, textShadowRadius: 2, marginBottom: 20, textAlign:'center' },
-  searchInput: { width: '100%', padding: 15, borderWidth: 2, borderColor: '#ffa500', borderRadius: 25, marginBottom: 30, fontSize: 16, backgroundColor: 'rgba(159, 195, 195, 0.7)', color: '#2e4b6d', fontWeight: '500', paddingLeft: 20 },
-  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 15, borderTopWidth: 2, borderTopColor: '#ffa500', backgroundColor: 'rgba(46, 75, 109, 0.8)' },
-  tab: { alignItems: 'center', padding: 10, flex: 1 },
-  activeTab: { borderTopWidth: 3, borderTopColor: '#ffa500' },
-  tabContent: { alignItems: 'center' },
-  tabIcon: { width: 24, height: 24, marginBottom: 5, tintColor: '#9fc3c3' },
-  tabText: { fontWeight: 'bold', fontSize: 14, color: '#9fc3c3', textTransform: 'uppercase' },
-  activeTabText: { color: '#ffa500' },
+  drawerName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2e4b6d',
+  },
+  drawerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  closeButton: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    padding: 10,
+  },
+  savedPlacesTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2e4b6d',
+    marginTop: 20,
+    marginBottom: 10,
+  },
 });

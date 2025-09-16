@@ -1,19 +1,19 @@
+import Footer from '@/app/Footer';
 import { ThemedText } from '@/components/ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Speech from 'expo-speech';
 import React, { useEffect, useState } from 'react';
 import {
-  Alert,
   Image,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
   Switch,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -30,64 +30,64 @@ const ProfileScreen = () => {
     email: '',
     profileImage: null as string | null,
   });
-
-  const [isEditingName, setIsEditingName] = useState(false);
-  const [newName, setNewName] = useState('');
-
-  const [newEmail, setNewEmail] = useState('');
-  const [confirmEmail, setConfirmEmail] = useState('');
-  const [isEditingEmail, setIsEditingEmail] = useState(false);
-
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-
   const [profileImage, setProfileImage] = useState<string | null>(null);
-
-  const [showAbout, setShowAbout] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [clickSound, setClickSound] = useState<Audio.Sound | null>(null);
 
-useEffect(() => {
-  const initialEmail = typeof paramEmail === "string" ? paramEmail : "chantellemmathabo4@gmail.com";
-  const initialName = typeof paramName === "string" 
-    ? paramName 
-    : extractNameFromEmail(initialEmail);
-
-  setUserData({
-    _id: '12345',
-    name: initialName,
-    email: initialEmail,
-    profileImage: null,
+  // --- MODAL STATE ---
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalConfig, setModalConfig] = useState({
+    title: '',
+    message: '',
+    confirmText: '',
+    cancelText: '',
+    confirmAction: () => {},
+    type: 'info' as 'info' | 'danger',
   });
-  setNewName(initialName);
 
-  const setup = async () => {
-    await loadSound();
-  };
-  setup();
+  // --- INITIAL LOAD ---
+  useEffect(() => {
+    const initialEmail =
+      typeof paramEmail === 'string'
+        ? paramEmail
+        : 'chantellemmathabo4@gmail.com';
+    const initialName =
+      typeof paramName === 'string'
+        ? paramName
+        : extractNameFromEmail(initialEmail);
 
-  return () => {
-    unloadSound();
-  };
-}, [paramName, paramEmail]);
+    setUserData({
+      _id: '12345',
+      name: initialName,
+      email: initialEmail,
+      profileImage: null,
+    });
 
+    const setup = async () => {
+      await loadSound();
+    };
+    setup();
+
+    return () => {
+      unloadSound();
+    };
+  }, [paramName, paramEmail]);
 
   const extractNameFromEmail = (email: string) => {
-      if (!email || !email.includes('@')) {
-    return "Chantelle";
-  }
+    if (!email || !email.includes('@')) return 'User';
     return email
-    .split('@')[0]
-    .split('.')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
+      .split('@')[0]
+      .split('.')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
   };
 
+  // --- AUDIO ---
   const loadSound = async () => {
-    const { sound } = await Audio.Sound.createAsync(require('../assets/click.wav'));
+    const { sound } = await Audio.Sound.createAsync(
+      require('../assets/click.wav')
+    );
     setClickSound(sound);
   };
 
@@ -100,12 +100,20 @@ useEffect(() => {
     if (callback) callback();
   };
 
-  // --- UPDATE PROFILE IMAGE ---
+  // --- IMAGE PICKER ---
   const pickImage = async () => {
     if (Platform.OS !== 'web') {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission Required', 'Camera roll permission needed!');
+        showModal({
+          title: 'Permission Required',
+          message: 'Camera roll permission needed!',
+          confirmText: 'OK',
+          cancelText: '',
+          confirmAction: () => {},
+          type: 'info',
+        });
         return;
       }
     }
@@ -125,368 +133,297 @@ useEffect(() => {
     }
   };
 
-  //Profile picture
   const uploadProfileImage = async (uri: string) => {
-  const formData = new FormData();
-  const fileName = uri.split('/').pop() || 'profile.jpg';
-  const fileType = `image/${fileName.split('.').pop() || 'jpeg'}`;
+    const formData = new FormData();
+    const fileName = uri.split('/').pop() || 'profile.jpg';
+    const fileType = `image/${fileName.split('.').pop() || 'jpeg'}`;
 
-  formData.append('profilePic', {
-    uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''),
-    name: fileName,
-    type: fileType,
-  } as any);
+    formData.append('profilePic', {
+      uri: Platform.OS === 'android' ? uri : uri.replace('file://', ''),
+      name: fileName,
+      type: fileType,
+    } as any);
 
-  try {
-    const response = await axios.put(
-      `${API_URL}/users/update/profilePic${userData._id}/profile-image`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    );
+    try {
+      const response = await axios.put(
+        `${API_URL}/users/update/profilePic${userData._id}/profile-image`,
+        formData,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
 
-    if (response.data.success) {
-      setUserData({ ...userData, profileImage: response.data.user.profileImage });
-      Alert.alert('Success', 'Profile picture updated!');
-    } else {
-      Alert.alert('Error', response.data.message || 'Failed to upload image');
-    }
-  } catch (err: any) {
-    console.error(err.response?.data || err.message);
-    Alert.alert('Error', err.response?.data?.message || 'Something went wrong');
-  }
-};
-
-//--update name
- const handleNameUpdate = async () => {
-  if (!newName.trim()) return Alert.alert('Error', 'Please enter your name');
-
-  try {
-    const response = await axios.put(`${API_URL}/users/update/${userData._id}`, {
-      name: newName,
-      email: userData.email, // include existing email if backend requires full object
-    });
-
-    if (response.data.success && response.data.user) {
-      setUserData({ ...userData, name: response.data.user.name });
-      setIsEditingName(false);
-      Alert.alert('Success', 'Name updated successfully!');
-    } else {
-      Alert.alert('Error', response.data.message || 'Failed to update name');
-    }
-  } catch (err: any) {
-    console.error(err.response?.data || err.message);
-    Alert.alert('Error', err.response?.data?.message || 'Something went wrong');
-  }
-};
-
-  // --- UPDATE EMAIL ---
-  const handleEmailUpdate = async () => {
-    handleClick(async () => {
-      if (!newEmail || !confirmEmail) return Alert.alert('Error', 'Fill all fields');
-      if (newEmail !== confirmEmail) return Alert.alert('Error', 'Emails do not match');
-
-      try {
-        const response = await axios.put(`${API_URL}/users/update`, {
-          oldEmail: userData.email,
-          newEmail,
+      if (response.data.success) {
+        setUserData({
+          ...userData,
+          profileImage: response.data.user.profileImage,
         });
-
-        if (response.data.message) {
-          setUserData({ ...userData, email: newEmail });
-          setNewEmail('');
-          setConfirmEmail('');
-          setIsEditingEmail(false);
-          Alert.alert('Success', 'Email updated!');
-        } else Alert.alert('Error', response.data.error || 'Failed to update email');
-      } catch (err: any) {
-        console.error(err.response?.data || err.message);
-        Alert.alert('Error', err.response?.data?.error || 'Something went wrong');
+        showModal({
+          title: 'Success',
+          message: 'Profile picture updated!',
+          confirmText: 'OK',
+          cancelText: '',
+          confirmAction: () => {},
+          type: 'info',
+        });
+      } else {
+        showModal({
+          title: 'Error',
+          message: response.data.message || 'Failed to upload image',
+          confirmText: 'OK',
+          cancelText: '',
+          confirmAction: () => {},
+          type: 'danger',
+        });
       }
-    });
+    } catch (err: any) {
+      console.error(err.response?.data || err.message);
+      showModal({
+        title: 'Error',
+        message: err.response?.data?.message || 'Something went wrong',
+        confirmText: 'OK',
+        cancelText: '',
+        confirmAction: () => {},
+        type: 'danger',
+      });
+    }
   };
 
-  // --- UPDATE PASSWORD ---
-  const handlePasswordChange = async () => {
-    handleClick(async () => {
-      if (!currentPassword || !newPassword || !confirmPassword)
-        return Alert.alert('Error', 'Fill all fields');
-      if (newPassword !== confirmPassword)
-        return Alert.alert('Error', 'Passwords do not match');
-
-      try {
-        const response = await axios.put(`${API_URL}/users/update`, {
-          oldEmail: userData.email,
-          currentPassword,
-          password: newPassword,
-        });
-
-        if (response.data.message) {
-          setCurrentPassword('');
-          setNewPassword('');
-          setConfirmPassword('');
-          setIsChangingPassword(false);
-          Alert.alert('Success', 'Password changed!');
-        } else Alert.alert('Error', response.data.error || 'Failed to change password');
-      } catch (err: any) {
-        console.error(err.response?.data || err.message);
-        Alert.alert('Error', err.response?.data?.error || 'Something went wrong');
-      }
-    });
+  // --- SHOW CUSTOM MODAL ---
+  const showModal = (config: typeof modalConfig) => {
+    setModalConfig(config);
+    setModalVisible(true);
   };
 
   // --- LOGOUT ---
   const handleLogout = () => {
-    handleClick(() => {
-      Alert.alert('Confirm Logout', 'Are you sure you want to log out?', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Log Out', onPress: () => router.replace('/') },
-      ]);
+    showModal({
+      title: 'Logging Out',
+      message:
+        'Are you sure you want to log out? You will need to log in again to access your profile.',
+      confirmText: 'Log Out',
+      cancelText: 'Cancel',
+      type: 'danger',
+      confirmAction: () => router.replace('/'),
     });
   };
 
   // --- DELETE PROFILE ---
-  const handleDeleteProfile = async () => {
-    handleClick(async () => {
-      Speech.speak('Your profile will be deleted');
-      Alert.alert(
-        'Delete Profile',
-        'Are you sure? This action cannot be undone.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Delete',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                const response = await axios.delete(`${API_URL}/delete`, {
-                  data: { email: userData.email },
-                });
-                if (response.data.message) {
-                  Alert.alert('Deleted', 'Account deleted successfully');
-                  router.replace('/');
-                } else Alert.alert('Error', response.data.error || 'Failed to delete account');
-              } catch (err: any) {
-                console.error(err.response?.data || err.message);
-                Alert.alert('Error', err.response?.data?.error || 'Something went wrong');
-              }
-            },
-          },
-        ]
-      );
+  const handleDeleteProfile = () => {
+    Speech.speak('Warning! Your profile will be permanently deleted.');
+    showModal({
+      title: 'Delete Account',
+      message:
+        'This action will permanently remove your account and all data. Are you sure you want to continue?',
+      confirmText: 'Yes, Delete',
+      cancelText: 'Cancel',
+      type: 'danger',
+      confirmAction: async () => {
+        try {
+          const response = await axios.delete(`${API_URL}/delete`, {
+            data: { email: userData.email },
+          });
+          if (response.data.message) router.replace('/');
+        } catch (err: any) {
+          console.error(err);
+        }
+      },
     });
   };
 
   // --- RENDER ---
   return (
-    <ScrollView style={styles.container}>
-      {/* HEADER */}
-      <View style={styles.header}>
-        <ThemedText style={styles.headerTitle}>Profile Settings</ThemedText>
-      </View>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
 
-      {/* PROFILE IMAGE */}
-      <View style={styles.profileSection}>
-        <View style={styles.imageContainer}>
-          {profileImage ? (
-            <Image source={{ uri: profileImage }} style={styles.profileImage} />
-          ) : (
-            <View style={[styles.profileImage, styles.placeholderContainer]}>
-              <Ionicons name="person" size={50} color="#c0d9d9" />
+      <View style={{ flex: 1, backgroundColor: 'white' }}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* HEADER */}
+          <View style={styles.header}>
+            <ThemedText style={styles.headerTitle}>Profile</ThemedText>
+          </View>
+
+          {/* PROFILE IMAGE */}
+          <View style={styles.profileSection}>
+            <View style={styles.imageContainer}>
+              {profileImage ? (
+                <Image source={{ uri: profileImage }} style={styles.profileImage} />
+              ) : (
+                <View style={[styles.profileImage, styles.placeholderContainer]}>
+                  <Ionicons name="person" size={50} color="#888" />
+                </View>
+              )}
+              <TouchableOpacity style={styles.cameraButton} onPress={pickImage}>
+                <Ionicons name="camera" size={20} color="white" />
+              </TouchableOpacity>
             </View>
-          )}
-          <TouchableOpacity style={styles.cameraButton} onPress={pickImage}>
-            <Ionicons name="camera" size={20} color="white" />
-          </TouchableOpacity>
-        </View>
-        <ThemedText style={styles.userName}>{userData.name}</ThemedText>
-      </View>
+            <ThemedText style={styles.userName}>{userData.name}</ThemedText>
+          </View>
 
-      {/* ACCOUNT INFO */}
-      <View style={styles.section}>
-        <ThemedText style={styles.sectionTitle}>Account Info</ThemedText>
-        <View style={styles.infoRow}>
-          <ThemedText style={styles.infoLabel}>Email</ThemedText>
-          <ThemedText style={styles.infoValue}>{userData.email}</ThemedText>
-        </View>
-      </View>
-
-      {/* UPDATE NAME */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <ThemedText style={styles.sectionTitle}>Update Name</ThemedText>
-          <TouchableOpacity onPress={() => setIsEditingName(!isEditingName)}>
-            <Ionicons
-              name={isEditingName ? 'chevron-up' : 'chevron-down'}
-              size={24}
-              color="#ffa500"
-            />
-          </TouchableOpacity>
-        </View>
-        {isEditingName && (
-          <View style={styles.form}>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter new name"
-              placeholderTextColor="#c0d9d9"
-              value={newName}
-              onChangeText={setNewName}
-            />
-            <TouchableOpacity style={styles.updateButton} onPress={handleNameUpdate}>
-              <ThemedText style={styles.updateButtonText}>Update Name</ThemedText>
+          {/* PERSONAL INFO */}
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Personal Info</ThemedText>
+            <TouchableOpacity
+              style={styles.infoRow}
+              onPress={() =>
+                router.push({
+                  pathname: '/edit-profile',
+                  params: { name: userData.name, email: userData.email },
+                })
+              }
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="person-outline" size={20} color="#000" style={{ marginRight: 10 }} />
+                <ThemedText style={styles.infoLabel}>Name</ThemedText>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <ThemedText style={styles.infoValue}>{userData.name}</ThemedText>
+                <Ionicons name="chevron-forward" size={20} color="#888" style={{ marginLeft: 5 }} />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.infoRow}
+              onPress={() =>
+                router.push({
+                  pathname: '/edit-profile',
+                  params: { name: userData.name, email: userData.email },
+                })
+              }
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="mail-outline" size={20} color="#000" style={{ marginRight: 10 }} />
+                <ThemedText style={styles.infoLabel}>Email</ThemedText>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <ThemedText style={styles.infoValue}>{userData.email}</ThemedText>
+                <Ionicons name="chevron-forward" size={20} color="#888" style={{ marginLeft: 5 }} />
+              </View>
             </TouchableOpacity>
           </View>
-        )}
-      </View>
 
-      {/* UPDATE EMAIL */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <ThemedText style={styles.sectionTitle}>Update Email</ThemedText>
-          <TouchableOpacity onPress={() => setIsEditingEmail(!isEditingEmail)}>
-            <Ionicons
-              name={isEditingEmail ? 'chevron-up' : 'chevron-down'}
-              size={24}
-              color="#ffa500"
-            />
-          </TouchableOpacity>
-        </View>
-        {isEditingEmail && (
-          <View style={styles.form}>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter new email"
-              placeholderTextColor="#c0d9d9"
-              value={newEmail}
-              onChangeText={setNewEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm new email"
-              placeholderTextColor="#c0d9d9"
-              value={confirmEmail}
-              onChangeText={setConfirmEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-            <TouchableOpacity style={styles.updateButton} onPress={handleEmailUpdate}>
-              <ThemedText style={styles.updateButtonText}>Update Email</ThemedText>
+          {/* SETTINGS */}
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>App Settings</ThemedText>
+            <View style={styles.switchRow}>
+              <ThemedText style={styles.switchLabel}>Voice Guidance</ThemedText>
+              <Switch
+                value={voiceEnabled}
+                onValueChange={(val) => setVoiceEnabled(val)}
+                thumbColor="#000"
+                trackColor={{ true: '#ccc', false: '#ccc' }}
+              />
+            </View>
+            <View style={styles.switchRow}>
+              
+              <ThemedText style={styles.switchLabel}>App Sounds</ThemedText>
+              <Switch
+                value={soundEnabled}
+                onValueChange={(val) => setSoundEnabled(val)}
+                thumbColor="black"
+                trackColor={{ true: '#ccc', false: '#ccc' }}
+              />
+            </View>
+          </View>
+
+          {/* ABOUT & ACTIONS */}
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={[styles.smallButton, { marginBottom: 10 }]}
+              onPress={() => router.push('/about-us')}
+            >
+              <Ionicons name="information-circle-outline" size={20} color="#000" style={{ marginRight: 10 }} />
+              <ThemedText style={[styles.smallButtonText, { color: '#000' }]}>About Us</ThemedText>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.smallButton} onPress={handleLogout}>
+              <Ionicons name="log-out-outline" size={20} color="#000" style={{ marginRight: 10 }} />
+              <ThemedText style={styles.smallButtonText}>Log Out</ThemedText>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.smallButton, { backgroundColor: '#ffe5e5' }]}
+              onPress={handleDeleteProfile}
+            >
+              <Ionicons name="trash-outline" size={20} color="red" style={{ marginRight: 10 }} />
+              <ThemedText style={[styles.smallButtonText, { color: 'red' }]}>Delete Account</ThemedText>
             </TouchableOpacity>
           </View>
-        )}
-      </View>
+        </ScrollView>
 
-      {/* CHANGE PASSWORD */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <ThemedText style={styles.sectionTitle}>Change Password</ThemedText>
-          <TouchableOpacity onPress={() => setIsChangingPassword(!isChangingPassword)}>
-            <Ionicons
-              name={isChangingPassword ? 'chevron-up' : 'chevron-down'}
-              size={24}
-              color="#ffa500"
-            />
-          </TouchableOpacity>
-        </View>
-        {isChangingPassword && (
-          <View style={styles.form}>
-            <TextInput
-              style={styles.input}
-              placeholder="Current password"
-              placeholderTextColor="#c0d9d9"
-              value={currentPassword}
-              onChangeText={setCurrentPassword}
-              secureTextEntry
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="New password"
-              placeholderTextColor="#c0d9d9"
-              value={newPassword}
-              onChangeText={setNewPassword}
-              secureTextEntry
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Confirm new password"
-              placeholderTextColor="#c0d9d9"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-            />
-            <TouchableOpacity style={styles.updateButton} onPress={handlePasswordChange}>
-              <ThemedText style={styles.updateButtonText}>Change Password</ThemedText>
-            </TouchableOpacity>
+        <Footer />
+
+        {/* --- CUSTOM MODAL --- */}
+        <Modal
+          visible={modalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View
+              style={[
+                styles.modalContainer,
+                modalConfig.type === 'danger' && { borderColor: '#ccc' },
+              ]}
+            >
+              <ThemedText style={styles.modalTitle}>{modalConfig.title}</ThemedText>
+              <ThemedText style={styles.modalMessage}>{modalConfig.message}</ThemedText>
+              <View style={styles.modalButtons}>
+                {modalConfig.cancelText ? (
+                  <TouchableOpacity
+                    style={[styles.modalButton, { backgroundColor: '#ccc' }]}
+                    onPress={() => setModalVisible(false)}
+                  >
+                    <ThemedText>{modalConfig.cancelText}</ThemedText>
+                  </TouchableOpacity>
+                ) : null}
+                <TouchableOpacity
+                  style={[
+                    styles.modalButton,
+                    modalConfig.type === 'danger' && { backgroundColor: 'red' },
+                  ]}
+                  onPress={() => {
+                    modalConfig.confirmAction();
+                    setModalVisible(false);
+                  }}
+                >
+                  <ThemedText style={{ color: 'white' }}>{modalConfig.confirmText}</ThemedText>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
-        )}
+        </Modal>
       </View>
-
-      {/* SETTINGS, ABOUT, LOGOUT/DELETE */}
-      <View style={styles.section}>
-        <ThemedText style={styles.sectionTitle}>App Settings</ThemedText>
-        <View style={styles.switchRow}>
-          <ThemedText style={styles.switchLabel}>Voice Guidance</ThemedText>
-          <Switch
-            value={voiceEnabled}
-            onValueChange={(val) => setVoiceEnabled(val)}
-            thumbColor="#ffa500"
-          />
-        </View>
-        <View style={styles.switchRow}>
-          <ThemedText style={styles.switchLabel}>App Sounds</ThemedText>
-          <Switch
-            value={soundEnabled}
-            onValueChange={(val) => setSoundEnabled(val)}
-            thumbColor="#ffa500"
-          />
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <TouchableOpacity style={[styles.actionButton, styles.logoutButton]} onPress={handleLogout}>
-          <ThemedText style={[styles.actionButtonText, styles.logoutButtonText]}>Log Out</ThemedText>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, styles.deleteButton]} onPress={handleDeleteProfile}>
-          <ThemedText style={[styles.actionButtonText, styles.deleteButtonText]}>Delete Account</ThemedText>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#5a7f99' },
-  header: { paddingTop: 50, paddingBottom: 20, paddingHorizontal: 20, backgroundColor: '#2e4b6d', borderBottomWidth: 2, borderBottomColor: '#ffa500' },
-  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#ffa500', textAlign: 'center' },
-  profileSection: { alignItems: 'center', padding: 20, backgroundColor: 'rgba(159,195,195,0.8)', margin: 10, borderRadius: 15, borderWidth: 2, borderColor: '#ffa500' },
+  header: { paddingTop: 50, paddingBottom: 20, backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#eee' },
+  smallButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 10, backgroundColor: '#f5f5f5', marginVertical: 5, borderBottomWidth: 1, borderBottomColor: '#e5e5e5' },
+  smallButtonText: { fontSize: 14, fontWeight: '500', color: '#000' },
+  headerTitle: { fontSize: 22, fontWeight: '700', color: '#000', textAlign: 'center' },
+  profileSection: { alignItems: 'center', padding: 20, backgroundColor: '#f5f5f5', margin: 10, borderRadius: 12 },
   imageContainer: { position: 'relative', marginBottom: 15 },
-  profileImage: { width: 120, height: 120, borderRadius: 60, borderWidth: 3, borderColor: '#ffa500', justifyContent: 'center', alignItems: 'center' },
-  placeholderContainer: { backgroundColor: '#5a7f99' },
-  cameraButton: { position: 'absolute', right: 0, bottom: 0, backgroundColor: '#ffa500', width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: 'white' },
-  userName: { fontSize: 22, fontWeight: 'bold', color: '#2e4b6d' },
-  section: { backgroundColor: 'rgba(159,195,195,0.8)', padding: 20, margin: 10, borderRadius: 15, borderWidth: 2, borderColor: '#ffa500' },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#2e4b6d' },
-  infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#5a7f99' },
-  infoLabel: { fontSize: 16, color: '#2e4b6d', fontWeight: 'bold' },
-  infoValue: { fontSize: 16, color: '#2e4b6d', fontWeight: '500' },
-  form: { marginTop: 10 },
-  input: { backgroundColor: '#5a7f99', padding: 12, borderRadius: 8, marginBottom: 20, color: '#fff', fontSize: 16, borderWidth: 1, borderColor: '#ffa500' },
-  updateButton: { backgroundColor: '#ffa500', padding: 15, borderRadius: 8, alignItems: 'center', marginTop: 10 },
-  updateButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  actionButton: { padding: 15, borderRadius: 10, alignItems: 'center', marginVertical: 5 },
-  logoutButton: { backgroundColor: '#2e4b6d' },
-  logoutButtonText: { color: '#ffa500' },
-  deleteButton: { backgroundColor: '#2e4b6d' },
-  deleteButtonText: { color: '#ffa500' },
-  actionButtonText: { fontSize: 16, fontWeight: 'bold' },
-  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10 },
-  switchLabel: { fontSize: 16, color: '#2e4b6d', fontWeight: '500' },
+  profileImage: { width: 120, height: 120, borderRadius: 60, borderWidth: 2, borderColor: '#ddd', justifyContent: 'center', alignItems: 'center' },
+  placeholderContainer: { backgroundColor: '#ddd' },
+  cameraButton: { position: 'absolute', right: 0, bottom: 0, backgroundColor: '#000', width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+  userName: { fontSize: 20, fontWeight: '600', color: '#000' },
+  section: { backgroundColor: '#f5f5f5', padding: 20, margin: 10, borderRadius: 12 },
+  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#000', marginBottom: 10 },
+  infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#e5e5e5' },
+  infoLabel: { fontSize: 14, fontWeight: '500', color: '#333' },
+  infoValue: { fontSize: 14, color: '#555' },
+  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#e5e5e5' },
+  switchLabel: { fontSize: 14, color: '#000', fontWeight: '500' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  modalContainer: { width: '80%', backgroundColor: '#fff', padding: 20, borderRadius: 12, borderWidth: 2, borderColor: '#000' },
+  modalTitle: { fontSize: 18, fontWeight: '700', marginBottom: 10, color: '#000' },
+  modalMessage: { fontSize: 14, marginBottom: 20, color: '#333' },
+  modalButtons: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10 },
+  modalButton: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 10, alignItems: 'center' },
 });
 
 export default ProfileScreen;
