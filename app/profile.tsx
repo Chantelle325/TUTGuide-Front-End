@@ -64,8 +64,8 @@ const ProfileScreen = () => {
       if (response.data.success) {
         const user = response.data.user;
         setUserData({
-          _id: user._id,
-          name: user.name,
+          _id: user.email,      // can use email as unique identifier
+          name: user.fullName,  // map fullName -> name
           email: user.email,
           profileImage: user.profileImage || null,
         });
