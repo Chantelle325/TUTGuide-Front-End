@@ -1,6 +1,6 @@
 import { ThemedText } from '@/components/ThemedText';
 import { Ionicons } from '@expo/vector-icons';
-import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -14,6 +14,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+import API from './api'; // <- centralized Axios instance
 
 // Conditional import for Picker
 let PickerComponent: any;
@@ -35,25 +36,28 @@ export default function SignUpScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState<'user' | 'admin'>('user');
 
-  // Password visibility states
+  // Password visibility
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  const API_URL = "https://ismabasamirenda123.loca.lt/api/auth";
 
   const handleSignUp = async () => {
     if (!fullName.trim()) return Alert.alert('Error', 'Please enter your full name');
     if (!email.trim()) return Alert.alert('Error', 'Please enter your email');
-    if (password !== confirmPassword) return Alert.alert('Error', 'Passwords do not match');
-    if (password.length < 6) return Alert.alert('Error', 'Password must be at least 6 characters');
+    if (password.trim() !== confirmPassword.trim()) return Alert.alert('Error', 'Passwords do not match');
+    if (password.trim().length < 6) return Alert.alert('Error', 'Password must be at least 6 characters');
 
     try {
-      const response = await axios.post(`${API_URL}/register`, {
-        fullName,
-        email,
-        password,
+      const response = await API.post('/auth/register', {
+        fullName: fullName.trim(),
+        email: email.trim(),
+        password: password.trim(),
         role,
       });
+
+      // If backend returns JWT token, store it
+      if (response.data.token) {
+        await AsyncStorage.setItem('userToken', response.data.token);
+      }
 
       Alert.alert("Success", response.data.message || "Account created!");
       router.push({
@@ -64,9 +68,10 @@ export default function SignUpScreen() {
           role 
         },
       });
- } catch (err: any) { 
-   console.log("Registration error:", err.response?.data || err.message);
-   Alert.alert("Error", err.response?.data?.message || "Registration failed"); }
+    } catch (err: any) {
+      console.log("Registration error:", err.response?.data || err.message);
+      Alert.alert("Error", err.response?.data?.message || "Registration failed");
+    }
   };
 
   return (
@@ -204,6 +209,7 @@ export default function SignUpScreen() {
   );
 }
 
+// Your styles remain unchanged
 const styles = StyleSheet.create({
   logoContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 30 },
   logoCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#2e4b6d', justifyContent: 'center', alignItems: 'center', marginRight: 15, borderWidth: 3, borderColor: '#ffa500' },

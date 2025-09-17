@@ -1,8 +1,8 @@
 import { ThemedText } from '@/components/ThemedText';
-import axios from 'axios';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import API from './api'; // <- use centralized Axios instance
 
 export default function VerifyCodeScreen() {
   const { fullName, email, role } = useLocalSearchParams<{
@@ -13,33 +13,30 @@ export default function VerifyCodeScreen() {
   const router = useRouter();
   const [code, setCode] = useState('');
 
-  const API_URL = "https://ismabasamirenda123.loca.lt/api/auth";
-
   const handleVerify = async () => {
     if (!code.trim()) return Alert.alert("Error", "Please enter the verification code");
 
     try {
-      const response = await axios.post(`${API_URL}/register/verify`, {
+      const response = await API.post('/auth/register/verify', {
         email: decodeURIComponent(email),
-        code,
+        code: code.trim(),
       });
 
       Alert.alert("Success", response.data.message || "Account verified!");
 
-      // Pass all params to SignUpSuccessScreen
+      // Navigate to signup success screen
       router.replace({
         pathname: '/signup-success',
         params: {
-          fullName: fullName,
-          email: email,
-          role: role,
+          fullName,
+          email,
+          role,
         },
       });
     } catch (err: any) {
-    console.log("Verification error:", err.response?.data || err.message);
-    Alert.alert("Error", err.response?.data?.message || "Verification failed");
-}
-
+      console.log("Verification error:", err.response?.data || err.message);
+      Alert.alert("Error", err.response?.data?.message || "Verification failed");
+    }
   };
 
   return (

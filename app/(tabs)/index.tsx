@@ -1,12 +1,12 @@
 import { ThemedText } from '@/components/ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Image, ImageBackground, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import API from '../api';
 
-const API_URL = "https://ismabasamirenda123.loca.lt/api/auth";
+
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -19,7 +19,7 @@ export default function LoginScreen() {
     if (!password) return Alert.alert('Error', 'Please enter your password');
 
     try {
-      const response = await axios.post(`${API_URL}/login`, { email: email.trim(), password });
+      const response = await API.post(`/auth/login`, { email: email.trim(), password });
       console.log(response);
       const { user, token, message } = response.data;
 

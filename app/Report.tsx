@@ -1,8 +1,8 @@
+// app/ReportScreen.tsx
 import Footer from '@/app/Footer';
 import { ThemedText } from '@/components/ThemedText';
 import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -19,6 +19,7 @@ import {
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
+import API from './api';
 
 export default function ReportScreen() {
   const [report, setReport] = useState('');
@@ -28,8 +29,6 @@ export default function ReportScreen() {
   const router = useRouter();
 
   const MAX_LENGTH = 250;
-
-  const API_URL = 'https://ismabasamirenda123.loca.lt/feedback';
 
   useEffect(() => {
     AsyncStorage.getItem('userToken').then((storedToken) => {
@@ -45,7 +44,7 @@ export default function ReportScreen() {
   const pickFile = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         quality: 0.7,
       });
@@ -70,11 +69,23 @@ export default function ReportScreen() {
     }
 
     try {
-      const response = await axios.post(
-        `${API_URL}/submit`,
-        { feedback_message: report, attachment },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const formData = new FormData();
+      formData.append('feedback_message', report);
+
+      if (attachment) {
+        formData.append('attachment', {
+          uri: attachment,
+          name: 'report_image.jpg', // you can extract filename from URI if needed
+          type: 'image/jpeg',
+        } as any);
+      }
+
+      const response = await API.post('/feedback/reports', formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
       if (response.status === 201) {
         Alert.alert('Success', 'Your report has been sent to the admin.');
@@ -117,7 +128,7 @@ export default function ReportScreen() {
                 onChangeText={(text) => setReport(text.slice(0, MAX_LENGTH))}
                 multiline
               />
-              <Text style={styles.charCount}>{MAX_LENGTH - report.length} </Text>
+              <Text style={styles.charCount}>{MAX_LENGTH - report.length}</Text>
 
               <TouchableOpacity onPress={pickFile} style={styles.iconWrapper}>
                 <Feather name="paperclip" size={22} color="#000" />

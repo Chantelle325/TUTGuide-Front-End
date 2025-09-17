@@ -1,33 +1,29 @@
 import { ThemedText } from '@/components/ThemedText';
-import axios from 'axios';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, TextInput, TouchableOpacity, View } from 'react-native';
+import API from './api'; // 👈 use centralized Axios
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
   const router = useRouter();
 
-  const API_URL = "https://ismabasamirenda123.loca.lt/api";
-
   const handleRequestCode = async () => {
     if (!email.trim()) return Alert.alert('Error', 'Please enter your email');
 
     try {
-      const response = await axios.post(`${API_URL}/forgot-password`, { email });
+      const response = await API.post('/forgot-password', { email }); // 👈 replaced axios
       if (response.data.success) {
         Alert.alert('Success', `OTP sent to ${email}`);
-        // 👉 Go to verify screen and pass email as param
         router.push({
           pathname: '/verify-otp',
           params: { email },
         });
       }
-   } catch (err: any) {
-  console.log('OTP error:', err.response?.data || err.message);
-  Alert.alert('Error', err.response?.data?.message || 'Failed to send OTP');
-}
-
+    } catch (err: any) {
+      console.log('OTP error:', err.response?.data || err.message);
+      Alert.alert('Error', err.response?.data?.message || 'Failed to send OTP');
+    }
   };
 
   return (

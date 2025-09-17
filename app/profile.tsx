@@ -1,7 +1,6 @@
 import Footer from '@/app/Footer';
 import { ThemedText } from '@/components/ThemedText';
 import { Ionicons } from '@expo/vector-icons';
-import axios from 'axios';
 import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
@@ -17,8 +16,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
-const API_URL = 'https://ismabasamirenda123.loca.lt/api';
+import API from './api'; // CHANGED: centralized Axios instance with JWT
 
 const ProfileScreen = () => {
   const router = useRouter();
@@ -48,22 +46,7 @@ const ProfileScreen = () => {
 
   // --- INITIAL LOAD ---
   useEffect(() => {
-    const initialEmail =
-      typeof paramEmail === 'string'
-        ? paramEmail
-        : 'chantellemmathabo4@gmail.com';
-    const initialName =
-      typeof paramName === 'string'
-        ? paramName
-        : extractNameFromEmail(initialEmail);
-
-    setUserData({
-      _id: '12345',
-      name: initialName,
-      email: initialEmail,
-      profileImage: null,
-    });
-
+    fetchUserDetails(); // CHANGED: fetch from backend
     const setup = async () => {
       await loadSound();
     };
@@ -72,7 +55,26 @@ const ProfileScreen = () => {
     return () => {
       unloadSound();
     };
-  }, [paramName, paramEmail]);
+  }, []);
+
+  // --- FETCH USER DETAILS ---
+  const fetchUserDetails = async () => {
+    try {
+      const response = await API.get('/users/details'); // CHANGED: backend route
+      if (response.data.success) {
+        const user = response.data.user;
+        setUserData({
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          profileImage: user.profileImage || null,
+        });
+        setProfileImage(user.profileImage || null);
+      }
+    } catch (err) {
+      console.error('Failed to fetch user details:', err);
+    }
+  };
 
   const extractNameFromEmail = (email: string) => {
     if (!email || !email.includes('@')) return 'User';
@@ -145,8 +147,8 @@ const ProfileScreen = () => {
     } as any);
 
     try {
-      const response = await axios.put(
-        `${API_URL}/users/update/profilePic${userData._id}/profile-image`,
+      const response = await API.put(
+        '/users/update/profilePic', // CHANGED: removed _id from URL
         formData,
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
@@ -218,9 +220,7 @@ const ProfileScreen = () => {
       type: 'danger',
       confirmAction: async () => {
         try {
-          const response = await axios.delete(`${API_URL}/delete`, {
-            data: { email: userData.email },
-          });
+          const response = await API.delete('/users/delete'); // CHANGED: backend route
           if (response.data.message) router.replace('/');
         } catch (err: any) {
           console.error(err);
@@ -307,24 +307,23 @@ const ProfileScreen = () => {
             </TouchableOpacity>
 
             {/* Change Password */}
-          <TouchableOpacity
-  style={styles.infoRow}
-  onPress={() => router.push('/change-password')}
->
-  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-    <Ionicons
-      name="lock-closed-outline"
-      size={20}
-      color="#000"
-      style={{ marginRight: 10 }}
-    />
-    <ThemedText style={styles.infoLabel}>Change Password</ThemedText>
-  </View>
-  <View>
-    <Ionicons name="chevron-forward" size={20} color="#888" />
-  </View>
-</TouchableOpacity>
-
+            <TouchableOpacity
+              style={styles.infoRow}
+              onPress={() => router.push('./change-password')}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={20}
+                  color="#000"
+                  style={{ marginRight: 10 }}
+                />
+                <ThemedText style={styles.infoLabel}>Change Password</ThemedText>
+              </View>
+              <View>
+                <Ionicons name="chevron-forward" size={20} color="#888" />
+              </View>
+            </TouchableOpacity>
           </View>
 
           {/* SETTINGS */}
@@ -423,6 +422,7 @@ const ProfileScreen = () => {
   );
 };
 
+// --- STYLES (unchanged) ---
 const styles = StyleSheet.create({
   header: { paddingTop: 50, paddingBottom: 20, backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#eee' },
   smallButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 10, backgroundColor: '#f5f5f5', marginVertical: 5, borderBottomWidth: 1, borderBottomColor: '#e5e5e5' },

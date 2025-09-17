@@ -1,13 +1,13 @@
 import { ThemedText } from '@/components/ThemedText';
-import { Ionicons } from '@expo/vector-icons'; // 👈 for eye icon
-import axios from 'axios';
+import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Alert, TextInput, TouchableOpacity, View } from 'react-native';
+import API from './api'; // <- centralized Axios instance
 
 export default function VerifyOtp() {
-  const params = useLocalSearchParams();
-  const email = (params.email as string) || '';
+  const params = useLocalSearchParams<{ email: string }>();
+  const email = params.email ? decodeURIComponent(params.email) : '';
   const router = useRouter();
 
   const [otp, setOtp] = useState('');
@@ -15,35 +15,30 @@ export default function VerifyOtp() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [verified, setVerified] = useState(false);
 
-  // 👁 state for toggling password visibility
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  const API_URL = "https://ismabasamirenda123.loca.lt/api";
 
   const handleVerifyCode = async () => {
     if (!otp.trim()) return Alert.alert('Error', 'Please enter the OTP');
 
     try {
-      const response = await axios.post(`${API_URL}/verify-otp`, { email, otp });
+      const response = await API.post('/users/verify-otp', { email, otp });
       if (response.data.success) {
         Alert.alert('Success', 'OTP verified! You can now reset your password.');
         setVerified(true);
       }
-   } catch (err: any) {
-    console.log("OTP verification error:", err.response?.data || err.message);
-    Alert.alert("Error", err.response?.data?.message || "Invalid OTP");
-}
-
+    } catch (err: any) {
+      console.log('OTP verification error:', err.response?.data || err.message);
+      Alert.alert('Error', err.response?.data?.message || 'Invalid OTP');
+    }
   };
 
   const handleResetPassword = async () => {
-    if (!newPassword.trim() || !confirmPassword.trim()) {
+    if (!newPassword.trim() || !confirmPassword.trim())
       return Alert.alert('Error', 'Please fill in both password fields');
-    }
 
     try {
-      const response = await axios.post(`${API_URL}/reset-password`, {
+      const response = await API.post('/users/reset-password', {
         email,
         newPassword,
         confirmPassword,
@@ -51,7 +46,7 @@ export default function VerifyOtp() {
 
       if (response.data.success) {
         Alert.alert('Success', 'Password reset successfully!');
-        router.replace('/'); // go back to login
+        router.replace('/'); // navigate back to login
       }
     } catch (err: any) {
       console.error(err.response?.data || err.message);
@@ -75,19 +70,16 @@ export default function VerifyOtp() {
             onChangeText={setOtp}
             keyboardType="numeric"
           />
-
           <TouchableOpacity
             style={{ backgroundColor: '#ffa500', padding: 15, borderRadius: 8, alignItems: 'center' }}
             onPress={handleVerifyCode}
           >
-            <ThemedText style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
-              Verify OTP
-            </ThemedText>
+            <ThemedText style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Verify OTP</ThemedText>
           </TouchableOpacity>
         </>
       ) : (
         <>
-          {/* New Password Input with Eye Icon */}
+          {/* New Password */}
           <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 8, marginBottom: 15 }}>
             <TextInput
               style={{ flex: 1, padding: 12, fontSize: 16 }}
@@ -96,14 +88,14 @@ export default function VerifyOtp() {
               value={newPassword}
               onChangeText={setNewPassword}
               secureTextEntry={!showNewPassword}
-              autoCapitalize="none" // 👈 prevents auto uppercase
+              autoCapitalize="none"
             />
             <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)} style={{ padding: 10 }}>
-              <Ionicons name={showNewPassword ? "eye-off" : "eye"} size={22} color="#555" />
+              <Ionicons name={showNewPassword ? 'eye-off' : 'eye'} size={22} color="#555" />
             </TouchableOpacity>
           </View>
 
-          {/* Confirm Password Input with Eye Icon */}
+          {/* Confirm Password */}
           <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 8, marginBottom: 20 }}>
             <TextInput
               style={{ flex: 1, padding: 12, fontSize: 16 }}
@@ -112,10 +104,10 @@ export default function VerifyOtp() {
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry={!showConfirmPassword}
-              autoCapitalize="none" // 👈 prevents auto uppercase
+              autoCapitalize="none"
             />
             <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)} style={{ padding: 10 }}>
-              <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={22} color="#555" />
+              <Ionicons name={showConfirmPassword ? 'eye-off' : 'eye'} size={22} color="#555" />
             </TouchableOpacity>
           </View>
 
@@ -123,9 +115,7 @@ export default function VerifyOtp() {
             style={{ backgroundColor: '#ffa500', padding: 15, borderRadius: 8, alignItems: 'center' }}
             onPress={handleResetPassword}
           >
-            <ThemedText style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>
-              Reset Password
-            </ThemedText>
+            <ThemedText style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Reset Password</ThemedText>
           </TouchableOpacity>
         </>
       )}
