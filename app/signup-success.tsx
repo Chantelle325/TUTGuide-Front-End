@@ -57,18 +57,18 @@ export default function SignUpSuccessScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 20, backgroundColor: '#5a7f99' },
+  container: { flex: 1, justifyContent: 'center', padding: 20, backgroundColor: '#ccc' },
   logoContainer: {flexDirection: 'row', alignItems: 'center',justifyContent: 'center',marginBottom: 30,},
-  logoCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#2e4b6d', justifyContent: 'center', alignItems: 'center', marginRight: 15, borderWidth: 3, borderColor: '#ffa500',},
+  logoCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', marginRight: 15, borderWidth: 3, borderColor: '#fff',},
   logoImage: {width: 50,height: 50,},
   logoTextContainer: {alignItems: 'flex-start',},
-  logoTextMain: {fontSize: 28,fontWeight: 'bold',color: '#ffa500',textShadowColor: 'rgba(0,0,0,0.3)',textShadowOffset: { width: 1, height: 1 },textShadowRadius: 2,},
-  successContainer: {backgroundColor: 'rgba(159, 195, 195, 0.8)',padding: 20,borderRadius: 15,borderWidth: 2,borderColor: '#ffa500',},
-  successTitle: {fontSize: 22,fontWeight: 'bold',color: '#2e4b6d',textAlign: 'center',marginBottom: 20,},
-  userInfo: {marginBottom: 20,padding: 15,backgroundColor: 'rgba(255, 255, 255, 0.7)',borderRadius: 10,},
-  userInfoText: {fontSize: 16,color: '#2e4b6d',marginBottom: 8,fontWeight: '500',},
-  successMessage: {fontSize: 16,color: '#2e4b6d',textAlign: 'center',marginBottom: 30,lineHeight: 24,},
-  continueButton: {backgroundColor: '#ffa500',padding: 15,borderRadius: 8,alignItems: 'center',},
-  continueButtonText: {color: '#2e4b6d',fontWeight: 'bold', fontSize: 18,
+  logoTextMain: {fontSize: 28,color: '#000'},
+  successContainer: {backgroundColor: 'white',padding: 20,borderRadius: 15,borderWidth: 2,borderColor: 'white',},
+  successTitle: {fontSize: 22,fontWeight: 'bold',color: '#000',textAlign: 'center',marginBottom: 20,},
+  userInfo: {marginBottom: 20,padding: 15,backgroundColor: '#eee',borderRadius: 10,},
+  userInfoText: {fontSize: 16,color: '#000',marginBottom: 8,fontWeight: '500',},
+  successMessage: {fontSize: 16,color: '#000',textAlign: 'center',marginBottom: 30,lineHeight: 24,},
+  continueButton: {backgroundColor: '#000',padding: 15,borderRadius: 8,alignItems: 'center',},
+  continueButtonText: {color: '#fff',fontWeight: 'bold', fontSize: 18,
   },
 });

@@ -23,7 +23,6 @@ const ProfileScreen = () => {
   const { name: paramName, email: paramEmail } = useLocalSearchParams();
 
   const [userData, setUserData] = useState({
-    _id: '',
     name: '',
     email: '',
     profileImage: null as string | null,
@@ -64,8 +63,7 @@ const ProfileScreen = () => {
       if (response.data.success) {
         const user = response.data.user;
         setUserData({
-          _id: user._id,
-          name: user.name,
+          name: user.fullName,  // map fullName -> name
           email: user.email,
           profileImage: user.profileImage || null,
         });
@@ -76,14 +74,14 @@ const ProfileScreen = () => {
     }
   };
 
-  const extractNameFromEmail = (email: string) => {
+  /*const extractNameFromEmail = (email: string) => {
     if (!email || !email.includes('@')) return 'User';
     return email
       .split('@')[0]
       .split('.')
       .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
       .join(' ');
-  };
+  };*/
 
   // --- AUDIO ---
   const loadSound = async () => {
@@ -200,7 +198,7 @@ const ProfileScreen = () => {
     showModal({
       title: 'Logging Out',
       message:
-        'Are you sure you want to log out? You will need to log in again to access your profile.',
+        'Are you sure you want to log out? ',
       confirmText: 'Log Out',
       cancelText: 'Cancel',
       type: 'danger',

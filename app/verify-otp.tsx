@@ -55,8 +55,8 @@ export default function VerifyOtp() {
   };
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', padding: 20, backgroundColor: '#5a7f99' }}>
-      <ThemedText style={{ fontSize: 22, fontWeight: 'bold', color: '#fff', marginBottom: 20, textAlign: 'center' }}>
+    <View style={{ flex: 1, justifyContent: 'center', padding: 20, backgroundColor: '#ddd' }}>
+      <ThemedText style={{ fontSize: 22, fontWeight: 'bold', color: '#333333', marginBottom: 20, textAlign: 'center' }}>
         Verify OTP
       </ThemedText>
 
@@ -71,7 +71,7 @@ export default function VerifyOtp() {
             keyboardType="numeric"
           />
           <TouchableOpacity
-            style={{ backgroundColor: '#ffa500', padding: 15, borderRadius: 8, alignItems: 'center' }}
+            style={{ backgroundColor: '#000', padding: 15, borderRadius: 8, alignItems: 'center' }}
             onPress={handleVerifyCode}
           >
             <ThemedText style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Verify OTP</ThemedText>
@@ -112,7 +112,7 @@ export default function VerifyOtp() {
           </View>
 
           <TouchableOpacity
-            style={{ backgroundColor: '#ffa500', padding: 15, borderRadius: 8, alignItems: 'center' }}
+            style={{ backgroundColor: '#000', padding: 15, borderRadius: 8, alignItems: 'center' }}
             onPress={handleResetPassword}
           >
             <ThemedText style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Reset Password</ThemedText>

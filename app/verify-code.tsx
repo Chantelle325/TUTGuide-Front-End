@@ -48,7 +48,7 @@ export default function VerifyCodeScreen() {
       <TextInput
         style={styles.input}
         placeholder="Enter verification code"
-        placeholderTextColor="#c0d9d9"
+        placeholderTextColor="#aaa"
         value={code}
         onChangeText={setCode}
         keyboardType="number-pad"
@@ -62,9 +62,9 @@ export default function VerifyCodeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 20, backgroundColor: '#5a7f99' },
-  title: { fontSize: 18, color: '#fff', textAlign: 'center', marginBottom: 30 },
-  input: { backgroundColor: '#9fc3c3', padding: 12, borderRadius: 8, marginBottom: 20, borderWidth: 1, borderColor: '#ffa500', color: '#2e4b6d', fontSize: 16 },
-  button: { backgroundColor: '#ffa500', padding: 15, borderRadius: 8, alignItems: 'center' },
-  buttonText: { color: '#2e4b6d', fontWeight: 'bold', fontSize: 18 },
+  container: { flex: 1, justifyContent: 'center', padding: 20, backgroundColor: '#ccc' },
+  title: { fontSize: 18, color: '#333333', textAlign: 'center', marginBottom: 30 },
+  input: { backgroundColor: '#ffff', padding: 12, borderRadius: 8, marginBottom: 20, borderWidth: 1, borderColor: '#fff', color: '#2e4b6d', fontSize: 16 },
+  button: { backgroundColor: '#000', padding: 15, borderRadius: 8, alignItems: 'center' },
+  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 18 },
 });

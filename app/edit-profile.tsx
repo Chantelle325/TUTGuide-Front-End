@@ -19,7 +19,7 @@ const EditProfileScreen = () => {
     }
 
     try {
-      const response = await API.put('/users/update', { name, email }); // 👈 replaced axios
+      const response = await API.put('/users/update/profile', { name, email }); // 👈 replaced axios
       if (response.data.success) {
         alert('Profile updated successfully');
         router.back();
