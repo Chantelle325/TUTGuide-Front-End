@@ -77,7 +77,7 @@ export default function SignUpScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <KeyboardAvoidingView
-        style={{ flex: 1, backgroundColor: '#000' }}
+        style={{ flex: 1, backgroundColor: '#aaa' }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
@@ -226,7 +226,7 @@ export default function SignUpScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: '#000',
+    backgroundColor: '#aaa',
     width: '100%',
     alignSelf: 'stretch',
     paddingTop: Platform.OS === 'ios' ? 60 : 60,

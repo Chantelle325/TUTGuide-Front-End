@@ -59,7 +59,7 @@ export default function LoginScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <KeyboardAvoidingView
-        style={{ flex: 1, backgroundColor: '#000' }}
+        style={{ flex: 1, backgroundColor: '#aaa' }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.header}>
@@ -144,7 +144,7 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: '#000',
+    backgroundColor: '#aaa',
     width: '100%',
     paddingTop: Platform.OS === 'ios' ? 60 : 90,
     paddingBottom: 75,

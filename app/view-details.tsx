@@ -104,11 +104,15 @@ export default function FeedbackDetails() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.downloadBtn}
-              onPress={() => Linking.openURL(feedback.attachment)}
+               style={styles.downloadBtn}
+               onPress={() => {
+                const downloadUrl = `${API.defaults.baseURL}/feedback/download/${feedback.feedback_id}`;
+                //const downloadUrl = `http://localhost:5000/attachments/download/${feedback.feedback_id}`;
+                Linking.openURL(downloadUrl);
+             }}
             >
-              <Ionicons name="download-outline" size={18} color="#fff" />
-              <Text style={styles.downloadText}>Download Attachment</Text>
+               <Ionicons name="download-outline" size={18} color="#fff" />
+               <Text style={styles.downloadText}>Download Attachment</Text>
             </TouchableOpacity>
           </>
         )}
