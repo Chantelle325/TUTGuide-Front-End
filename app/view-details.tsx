@@ -1,20 +1,22 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as FileSystem from "expo-file-system";
+import * as MediaLibrary from "expo-media-library";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    Linking,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 import API from "./api";
+
 
 export default function FeedbackDetails() {
   const { id } = useLocalSearchParams();
@@ -105,11 +107,39 @@ export default function FeedbackDetails() {
 
             <TouchableOpacity
                style={styles.downloadBtn}
-               onPress={() => {
-                const downloadUrl = `${API.defaults.baseURL}/feedback/download/${feedback.feedback_id}`;
-                //const downloadUrl = `http://localhost:5000/attachments/download/${feedback.feedback_id}`;
-                Linking.openURL(downloadUrl);
-             }}
+              // inside your TouchableOpacity for download
+          onPress={async () => {
+            try {
+              const downloadUrl = `${API.defaults.baseURL}/feedback/download/${feedback.feedback_id}`;
+
+              // Request media library permission
+              const { status } = await MediaLibrary.requestPermissionsAsync();
+              if (status !== "granted") {
+                Alert.alert("Permission denied", "Cannot save file without permission");
+                return;
+              }
+
+              // Download the file to app's document directory
+              const fileUri = FileSystem.documentDirectory + feedback.attachment_name;
+              const { uri } = await FileSystem.downloadAsync(downloadUrl, fileUri);
+
+              // Save the file to the Downloads folder (Android) / Camera Roll (iOS)
+              const asset = await MediaLibrary.createAssetAsync(uri);
+              const album = await MediaLibrary.getAlbumAsync("Download");
+              if (album == null) {
+                await MediaLibrary.createAlbumAsync("Download", asset, false);
+              } else {
+                await MediaLibrary.addAssetsToAlbumAsync([asset], album, false);
+              }
+
+              Alert.alert("Downloaded", `Saved to Downloads folder: ${feedback.attachment_name}`);
+              console.log("File saved at:", uri);
+            } catch (error) {
+              console.error("Download failed:", error);
+              Alert.alert("Error", "Could not download attachment");
+            }
+          }}
+
             >
                <Ionicons name="download-outline" size={18} color="#fff" />
                <Text style={styles.downloadText}>Download Attachment</Text>
