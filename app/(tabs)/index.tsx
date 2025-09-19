@@ -59,7 +59,7 @@ export default function LoginScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <KeyboardAvoidingView
-        style={{ flex: 1, backgroundColor: '#aaa' }}
+        style={{ flex: 1, backgroundColor: '#2b2a2aff' }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.header}>
@@ -69,6 +69,7 @@ export default function LoginScreen() {
             </View>
             <ThemedText style={styles.logoTextMain}>TUTGuide</ThemedText>
           </View>
+
         </View>
 
         <View style={styles.contentContainer}>
@@ -144,12 +145,13 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: '#aaa',
+    backgroundColor: '#2b2a2aff',
     width: '100%',
     paddingTop: Platform.OS === 'ios' ? 60 : 90,
     paddingBottom: 75,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative', // ✅ Needed for wave positioning
   },
   logoContainer: { flexDirection: 'row', alignItems: 'center' },
   logoCircle: {
@@ -166,20 +168,20 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-    borderTopLeftRadius: 100,
+    borderTopLeftRadius: 60, // ✅ smaller radius so curve shows
     overflow: 'hidden',
+    marginTop: -20, // ✅ pulls content slightly under the wave
   },
-title: {
-  fontSize: 18,
-  color: '#000',
-  textAlign: 'center',
-  marginBottom: 30,
-  fontWeight: '500',
-  marginTop: 40,
-  fontFamily: 'Montserrat',
-  textDecorationLine: 'underline',
-},
-
+  title: {
+    fontSize: 18,
+    color: '#000',
+    textAlign: 'center',
+    marginBottom: 30,
+    fontWeight: '500',
+    marginTop: 40,
+    fontFamily: 'Montserrat',
+    textDecorationLine: 'underline',
+  },
   formContainer: {
     borderWidth: 1,
     borderColor: '#ccc',
@@ -240,6 +242,7 @@ title: {
     marginTop: 10,
     marginBottom: 25
   },
+ 
   buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 18 },
   bottomTextContainer: { alignItems: 'center', marginTop: 10 },
   bottomText: { fontSize: 14, color: '#555' },
