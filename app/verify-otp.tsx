@@ -2,7 +2,13 @@ import { ThemedText } from '@/components/ThemedText';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  TextInput,
+  TouchableOpacity,
+  View
+} from 'react-native';
 import API from './api'; // <- centralized Axios instance
 
 export default function VerifyOtp() {
@@ -18,10 +24,15 @@ export default function VerifyOtp() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // ✅ loading states
+  const [verifying, setVerifying] = useState(false);
+  const [resetting, setResetting] = useState(false);
+
   const handleVerifyCode = async () => {
     if (!otp.trim()) return Alert.alert('Error', 'Please enter the OTP');
 
     try {
+      setVerifying(true); // start loading
       const response = await API.post('/users/verify-otp', { email, otp });
       if (response.data.success) {
         Alert.alert('Success', 'OTP verified! You can now reset your password.');
@@ -30,6 +41,8 @@ export default function VerifyOtp() {
     } catch (err: any) {
       console.log('OTP verification error:', err.response?.data || err.message);
       Alert.alert('Error', err.response?.data?.message || 'Invalid OTP');
+    } finally {
+      setVerifying(false); // stop loading
     }
   };
 
@@ -38,6 +51,7 @@ export default function VerifyOtp() {
       return Alert.alert('Error', 'Please fill in both password fields');
 
     try {
+      setResetting(true); // start loading
       const response = await API.post('/users/reset-password', {
         email,
         newPassword,
@@ -51,6 +65,8 @@ export default function VerifyOtp() {
     } catch (err: any) {
       console.error(err.response?.data || err.message);
       Alert.alert('Error', err.response?.data?.message || 'Failed to reset password');
+    } finally {
+      setResetting(false); // stop loading
     }
   };
 
@@ -71,10 +87,15 @@ export default function VerifyOtp() {
             keyboardType="numeric"
           />
           <TouchableOpacity
-            style={{ backgroundColor: '#000', padding: 15, borderRadius: 8, alignItems: 'center' }}
+            style={{ backgroundColor: '#000', padding: 15, borderRadius: 8, alignItems: 'center', opacity: verifying ? 0.7 : 1 }}
             onPress={handleVerifyCode}
+            disabled={verifying}
           >
-            <ThemedText style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Verify OTP</ThemedText>
+            {verifying ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <ThemedText style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Verify OTP</ThemedText>
+            )}
           </TouchableOpacity>
         </>
       ) : (
@@ -112,10 +133,15 @@ export default function VerifyOtp() {
           </View>
 
           <TouchableOpacity
-            style={{ backgroundColor: '#000', padding: 15, borderRadius: 8, alignItems: 'center' }}
+            style={{ backgroundColor: '#000', padding: 15, borderRadius: 8, alignItems: 'center', opacity: resetting ? 0.7 : 1 }}
             onPress={handleResetPassword}
+            disabled={resetting}
           >
-            <ThemedText style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Reset Password</ThemedText>
+            {resetting ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <ThemedText style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Reset Password</ThemedText>
+            )}
           </TouchableOpacity>
         </>
       )}

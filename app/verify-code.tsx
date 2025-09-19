@@ -1,7 +1,14 @@
 import { ThemedText } from '@/components/ThemedText';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View
+} from 'react-native';
 import API from './api'; // <- use centralized Axios instance
 
 export default function VerifyCodeScreen() {
@@ -12,11 +19,13 @@ export default function VerifyCodeScreen() {
   }>();
   const router = useRouter();
   const [code, setCode] = useState('');
+  const [loading, setLoading] = useState(false); // ✅ new state
 
   const handleVerify = async () => {
     if (!code.trim()) return Alert.alert("Error", "Please enter the verification code");
 
     try {
+      setLoading(true); // ✅ start loading
       const response = await API.post('/auth/register/verify', {
         email: decodeURIComponent(email),
         code: code.trim(),
@@ -36,6 +45,8 @@ export default function VerifyCodeScreen() {
     } catch (err: any) {
       console.log("Verification error:", err.response?.data || err.message);
       Alert.alert("Error", err.response?.data?.message || "Verification failed");
+    } finally {
+      setLoading(false); // ✅ stop loading always
     }
   };
 
@@ -54,8 +65,18 @@ export default function VerifyCodeScreen() {
         keyboardType="number-pad"
       />
 
-      <TouchableOpacity style={styles.button} onPress={handleVerify}>
-        <ThemedText type="defaultSemiBold" style={styles.buttonText}>VERIFY</ThemedText>
+      <TouchableOpacity 
+        style={[styles.button, loading && { opacity: 0.7 }]} 
+        onPress={handleVerify}
+        disabled={loading} // ✅ disable button while loading
+      >
+        {loading ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <ThemedText type="defaultSemiBold" style={styles.buttonText}>
+            VERIFY
+          </ThemedText>
+        )}
       </TouchableOpacity>
     </View>
   );

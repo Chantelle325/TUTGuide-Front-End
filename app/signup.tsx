@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -38,6 +39,7 @@ export default function SignUpScreen() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false); // ✅ new state
 
   const handleSignUp = async () => {
     if (!fullName.trim()) return Alert.alert('Error', 'Please enter your full name');
@@ -46,6 +48,8 @@ export default function SignUpScreen() {
     if (password.trim().length < 6) return Alert.alert('Error', 'Password must be at least 6 characters');
 
     try {
+      setLoading(true); // ✅ start loading
+
       const response = await API.post('/auth/register', {
         fullName: fullName.trim(),
         email: email.trim(),
@@ -69,6 +73,8 @@ export default function SignUpScreen() {
     } catch (err: any) {
       console.log("Registration error:", err.response?.data || err.message);
       Alert.alert("Error", err.response?.data?.message || "Registration failed");
+    } finally {
+      setLoading(false); // ✅ stop loading
     }
   };
 
@@ -77,7 +83,7 @@ export default function SignUpScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <KeyboardAvoidingView
-        style={{ flex: 1, backgroundColor: '#aaa' }}
+        style={{ flex: 1, backgroundColor: '#2b2a2aff' }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
@@ -198,10 +204,18 @@ export default function SignUpScreen() {
             </View>
 
             {/* SIGN UP BUTTON */}
-            <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-              <ThemedText type="defaultSemiBold" style={styles.buttonText}>
-                SIGN UP
-              </ThemedText>
+            <TouchableOpacity
+              style={[styles.button, loading && { opacity: 0.7 }]}
+              onPress={handleSignUp}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <ThemedText type="defaultSemiBold" style={styles.buttonText}>
+                  SIGN UP
+                </ThemedText>
+              )}
             </TouchableOpacity>
 
             {/* Already have an account */}
@@ -226,7 +240,7 @@ export default function SignUpScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: '#aaa',
+    backgroundColor: '#2b2a2aff',
     width: '100%',
     alignSelf: 'stretch',
     paddingTop: Platform.OS === 'ios' ? 60 : 60,

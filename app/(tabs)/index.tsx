@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
@@ -22,17 +23,21 @@ export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false); // ✅ loading state
 
   const handleSignIn = async () => {
     if (!email.trim()) return Alert.alert('Error', 'Please enter your email');
     if (!password) return Alert.alert('Error', 'Please enter your password');
 
     try {
+      setLoading(true); // ✅ start loading
+
       const response = await API.post(`/auth/login`, { email: email.trim(), password });
       const { user, token, message } = response.data;
 
       if (!user || !user.role || !token) {
         Alert.alert('Error', 'Invalid credentials or token missing');
+        setLoading(false);
         return;
       }
 
@@ -47,10 +52,11 @@ export default function LoginScreen() {
       } else {
         router.replace('/signin');
       }
-
     } catch (err: any) {
       console.log('Login error:', err.response?.data || err.message);
       Alert.alert('Error', err.response?.data?.message || 'Invalid credentials');
+    } finally {
+      setLoading(false); // ✅ stop loading in all cases
     }
   };
 
@@ -69,7 +75,6 @@ export default function LoginScreen() {
             </View>
             <ThemedText style={styles.logoTextMain}>TUTGuide</ThemedText>
           </View>
-
         </View>
 
         <View style={styles.contentContainer}>
@@ -120,10 +125,18 @@ export default function LoginScreen() {
               </ThemedText>
 
               {/* LOGIN BUTTON */}
-              <TouchableOpacity style={styles.button} onPress={handleSignIn}>
-                <ThemedText type="defaultSemiBold" style={styles.buttonText}>
-                  LOGIN
-                </ThemedText>
+              <TouchableOpacity
+                style={[styles.button, loading && { opacity: 0.7 }]}
+                onPress={handleSignIn}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <ThemedText type="defaultSemiBold" style={styles.buttonText}>
+                    LOGIN
+                  </ThemedText>
+                )}
               </TouchableOpacity>
 
               {/* SIGN UP LINK */}
@@ -151,7 +164,7 @@ const styles = StyleSheet.create({
     paddingBottom: 75,
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative', // ✅ Needed for wave positioning
+    position: 'relative',
   },
   logoContainer: { flexDirection: 'row', alignItems: 'center' },
   logoCircle: {
@@ -168,9 +181,9 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-    borderTopLeftRadius: 60, // ✅ smaller radius so curve shows
+    borderTopLeftRadius: 60,
     overflow: 'hidden',
-    marginTop: -20, // ✅ pulls content slightly under the wave
+    marginTop: -20,
   },
   title: {
     fontSize: 18,
@@ -242,7 +255,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 25
   },
- 
   buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 18 },
   bottomTextContainer: { alignItems: 'center', marginTop: 10 },
   bottomText: { fontSize: 14, color: '#555' },

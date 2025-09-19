@@ -24,7 +24,7 @@ export default function ChangePasswordScreen() {
     }
 
     try {
-      const response = await API.put('/auth/change-password', { currentPassword, newPassword });
+      const response = await API.put('/users/update/profile', { currentPassword, newPassword });
 
       if (response.data.success) {
         Alert.alert('Success', 'Password changed successfully');

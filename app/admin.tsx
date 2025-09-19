@@ -69,7 +69,7 @@ export default function AdminDashboard() {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.logoContainer}>
-            <Ionicons name="map" size={28} color="#FFA500" />
+            <Ionicons name="map" size={28} color="#000" />
           </View>
           <View>
             <Text style={styles.headerTitle}>TUT Guide Admin</Text>
@@ -91,7 +91,7 @@ export default function AdminDashboard() {
             ]);
           }}
         >
-          <Ionicons name="log-out-outline" size={20} color="#FFA500" />
+          <Ionicons name="log-out-outline" size={20} color="#000" />
         </TouchableOpacity>
       </View>
 
@@ -112,7 +112,7 @@ export default function AdminDashboard() {
                   : "settings"
               }
               size={18}
-              color={activeTab === tab ? "#FFA500" : "#B0C7C7"}
+              color={activeTab === tab ? "#000" : "#333333"}
             />
             <Text
               style={[styles.tabText, activeTab === tab && styles.activeTabText]}
@@ -127,15 +127,11 @@ export default function AdminDashboard() {
       <ScrollView style={styles.content}>
         {activeTab === "Dashboard" && (
           <View style={styles.tabContent}>
-            <Text style={styles.tabTitle}>Dashboard</Text>
-            <Text style={{ color: "#fff" }}>Welcome to the admin panel!</Text>
           </View>
         )}
 
         {activeTab === "Feedback" && (
           <View style={styles.tabContent}>
-            <Text style={styles.tabTitle}>User Feedback</Text>
-            {feedbacks.length === 0 && <Text>No feedback yet.</Text>}
             {feedbacks.map((fb, idx) => (
               <View key={idx} style={styles.locationCard}>
                 <View style={styles.locationHeader}>
@@ -159,8 +155,7 @@ export default function AdminDashboard() {
 
         {activeTab === "Settings" && (
           <View style={styles.tabContent}>
-            <Text style={styles.tabTitle}>Settings</Text>
-            <Text style={{ color: "#fff" }}>Settings panel</Text>
+            
           </View>
         )}
       </ScrollView>
@@ -203,7 +198,7 @@ export default function AdminDashboard() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#5A7F99" },
+  container: { flex: 1, backgroundColor: "#eee" },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -211,30 +206,30 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 50,
     paddingBottom: 16,
-    backgroundColor: "#2E4B6D",
+    backgroundColor: "#bbb",
     borderBottomWidth: 2,
-    borderBottomColor: "#FFA500",
+    borderBottomColor: "#fff",
   },
   headerLeft: { flexDirection: "row", alignItems: "center" },
   logoContainer: {
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: "#3A5C80",
+    backgroundColor: "#fff",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
   },
-  headerTitle: { fontSize: 20, fontWeight: "bold", color: "#FFA500" },
-  headerSubtitle: { fontSize: 13, color: "#E5E5E5", marginTop: 2 },
+  headerTitle: { fontSize: 20, fontWeight: "bold", color: "#000" },
+  headerSubtitle: { fontSize: 13, color: "#000", marginTop: 2 },
   logoutButton: {
     padding: 10,
     borderRadius: 50,
-    backgroundColor: "#2E4B6D",
+    backgroundColor: "#fff",
     borderWidth: 2,
-    borderColor: "#FFA500",
+    borderColor: "#fff",
   },
-  tabContainer: { flexDirection: "row", backgroundColor: "#2E4B6D" },
+  tabContainer: { flexDirection: "row", backgroundColor: "#ddd" },
   tab: {
     flex: 1,
     flexDirection: "row",
@@ -245,25 +240,25 @@ const styles = StyleSheet.create({
   },
   activeTab: {
     borderBottomWidth: 3,
-    borderBottomColor: "#FFA500",
-    backgroundColor: "#2E4B6D",
+    borderBottomColor: "#000",
+    backgroundColor: "#aaa",
   },
-  tabText: { color: "#B0C7C7", fontSize: 14 },
-  activeTabText: { color: "#FFA500", fontWeight: "bold" },
+  tabText: { color: "#333333", fontSize: 14 },
+  activeTabText: { color: "#000", fontWeight: "bold" },
   content: { flex: 1, padding: 16 },
   tabContent: { gap: 16 },
   tabTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#2E4B6D",
+    color: "#333333",
     marginBottom: 12,
   },
   locationCard: {
-    backgroundColor: "rgba(176,199,199,0.9)",
+    backgroundColor: "#fff",
     borderRadius: 14,
     padding: 16,
     borderWidth: 2,
-    borderColor: "#FFA500",
+    borderColor: "#fff",
     marginBottom: 10,
   },
   locationHeader: {
@@ -272,9 +267,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 6,
   },
-  locationName: { fontSize: 16, fontWeight: "600", color: "#2E4B6D" },
+  locationName: { fontSize: 16, fontWeight: "600", color: "#333333" },
   viewButton: {
-    backgroundColor: "#FFA500",
+    backgroundColor: "#aaa",
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 8,
