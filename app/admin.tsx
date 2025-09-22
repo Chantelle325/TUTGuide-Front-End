@@ -21,8 +21,43 @@ export default function AdminDashboard() {
   const [adminToken, setAdminToken] = useState("");
   const [loading, setLoading] = useState(true);
   const [selectedFeedback, setSelectedFeedback] = useState<any | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [viewedFeedbackIds, setViewedFeedbackIds] = useState<number[]>([]);
 
+
+  
   const router = useRouter();
+
+const handleViewFeedback = async (fb: any) => {
+  try {
+    // Only mark as viewed if not already viewed
+    if (!viewedFeedbackIds.includes(fb.feedback_id)) {
+      // Call backend to mark as viewed
+      await API.patch(`/feedback/${fb.feedback_id}/viewed`, {}, {
+  headers: { Authorization: `Bearer ${adminToken}` },
+});
+
+      // Update local state
+      setViewedFeedbackIds((prev) => [...prev, fb.feedback_id]);
+      setUnreadCount((prev) => (prev > 0 ? prev - 1 : 0));
+    }
+
+    // Navigate to details page
+    router.push({
+      pathname: "/view-details",
+      params: { id: fb.feedback_id },
+    });
+  } catch (err: any) {
+    console.error(err.response?.data || err.message);
+    Alert.alert("Error", "Failed to mark feedback as viewed");
+  }
+};
+
+
+
+
+
+
 
   // Load token from AsyncStorage
   useEffect(() => {
@@ -46,7 +81,19 @@ export default function AdminDashboard() {
       const response = await API.get(`/feedback/all`, {
         headers: { Authorization: `Bearer ${adminToken}` },
       });
+
       setFeedbacks(response.data);
+
+      // Compute unread count based on `is_viewed` property
+      const unread = response.data.filter((fb: any) => fb.is_viewed === 0).length;
+      setUnreadCount(unread);
+
+      // Track feedbacks already viewed (for styling and preventing double decrement)
+      const viewedIds = response.data
+        .filter((fb: any) => fb.is_viewed === 1)
+        .map((fb: any) => fb.feedback_id);
+      setViewedFeedbackIds(viewedIds);
+
     } catch (err: any) {
       console.error(err.response?.data || err.message);
       Alert.alert("Error", "Failed to fetch feedbacks");
@@ -119,6 +166,13 @@ export default function AdminDashboard() {
             >
               {tab}
             </Text>
+
+                      {/* Show badge only for Feedback */}
+            {tab === "Feedback" && unreadCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{unreadCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
         ))}
       </View>
@@ -136,24 +190,33 @@ export default function AdminDashboard() {
           <View style={styles.tabContent}>
             <Text style={styles.tabTitle}>User Feedback</Text>
             {feedbacks.length === 0 && <Text>No feedback yet.</Text>}
-            {feedbacks.map((fb, idx) => (
-              <View key={idx} style={styles.locationCard}>
-                <View style={styles.locationHeader}>
-                  <Text style={styles.locationName}>{fb.email}</Text>
+            {feedbacks.map((fb, idx) => {
+  const isViewed = viewedFeedbackIds.includes(fb.feedback_id);
 
-                  {/* View button */}
-                 <TouchableOpacity
-  style={styles.viewButton}
-  onPress={() => router.push({
-    pathname: "/view-details",
-    params: { id: fb.feedback_id } // assuming feedback has an id
-  })}
->
-  <Text style={styles.viewButtonText}>View</Text>
-</TouchableOpacity>
-                </View>
-              </View>
-            ))}
+  return (
+    <View key={idx} style={styles.locationCard}>
+      <View style={styles.locationHeader}>
+        <Text
+          style={[
+            styles.locationName,
+            isViewed && styles.viewedFeedbackText, // add style if viewed
+          ]}
+        >
+          {fb.email}
+        </Text>
+
+        {/* View button */}
+        <TouchableOpacity
+          style={[styles.viewButton, isViewed && styles.viewedButton]} // optional button style for viewed
+          onPress={() => handleViewFeedback(fb)}
+        >
+          <Text style={styles.viewButtonText}>View Report</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+})}
+
           </View>
         )}
 
@@ -272,7 +335,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 6,
   },
-  locationName: { fontSize: 16, fontWeight: "600", color: "#2E4B6D" },
+  locationName: { fontSize: 16, fontWeight: "600", color: "#2E4B6D", flex: 1, marginRight: 10 },
   viewButton: {
     backgroundColor: "#FFA500",
     paddingVertical: 6,
@@ -306,4 +369,28 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   closeButtonText: { color: "#fff", fontWeight: "600" },
+  badge: {
+  backgroundColor: "#FF0000",
+  borderRadius: 10,
+  paddingHorizontal: 6,
+  paddingVertical: 2,
+  marginLeft: 6,
+  minWidth: 20,
+  alignItems: "center",
+  justifyContent: "center",
+},
+badgeText: {
+  color: "#fff",
+  fontSize: 12,
+  fontWeight: "bold",
+},
+viewedFeedbackText: {
+  color: "#888",      // grey color to indicate viewed
+  fontStyle: "italic",
+},
+
+viewedButton: {
+  backgroundColor: "#B0C7C7", // lighter button for viewed reports
+},
+
 });
