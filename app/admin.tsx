@@ -1,7 +1,8 @@
-import { Ionicons } from "@expo/vector-icons";
+import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
+
 import {
   ActivityIndicator,
   Alert,
@@ -104,13 +105,13 @@ export default function AdminDashboard() {
 
   const fetchDashboardCounts = async (token: string) => {
     try {
-      const response = await API.get("/dashboard-counts", {
+      const response = await API.get("/dashboard/stats", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       const counts = response.data;
       setTotalUsers(counts.totalUsers);
-      setPreviousUsers(counts.previousUsers);
+      setPreviousUsers(counts.totalPreviousUsers);
       setTotalBuildings(counts.totalBuildings);
       setTotalRooms(counts.totalRooms);
     } catch (err: any) {
@@ -164,30 +165,42 @@ export default function AdminDashboard() {
 
       {/* Content */}
       <ScrollView style={styles.content}>
-        {/* Dashboard Tab */}
-        {activeTab === "Dashboard" && (
-          <View style={styles.tabContent}>
-            <Text style={[styles.tabTitle, darkMode && styles.darkText]}>Dashboard</Text>
-            <View style={styles.dashboardGrid}>
-              <TouchableOpacity style={styles.dashboardCard}>
-                <Text style={styles.cardTitle}>Total Users</Text>
-                <Text style={styles.cardValue}>{totalUsers}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.dashboardCard}>
-                <Text style={styles.cardTitle}>Previous Users</Text>
-                <Text style={styles.cardValue}>{previousUsers}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.dashboardCard}>
-                <Text style={styles.cardTitle}>Total Buildings</Text>
-                <Text style={styles.cardValue}>{totalBuildings}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.dashboardCard}>
-                <Text style={styles.cardTitle}>Total Rooms</Text>
-                <Text style={styles.cardValue}>{totalRooms}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
+       {/* Dashboard Tab */}
+{activeTab === "Dashboard" && (
+  <View style={styles.tabContent}>
+    <Text style={[styles.tabTitle, darkMode && styles.darkText]}>Dashboard</Text>
+    <View style={styles.dashboardGrid}>
+      
+      {/* Total Users */}
+      <TouchableOpacity style={styles.dashboardCard}>
+        <Ionicons name="people" size={28} color="#4CAF50" style={styles.cardIcon} />
+        <Text style={styles.cardTitle}>Total Users</Text>
+        <Text style={styles.cardValue}>{totalUsers}</Text>
+      </TouchableOpacity>
+
+      {/* Previous Users */}
+      <TouchableOpacity style={styles.dashboardCard}>
+        <MaterialIcons name="history" size={28} color="#FF9800" style={styles.cardIcon} />
+        <Text style={styles.cardTitle}>Previous Users</Text>
+        <Text style={styles.cardValue}>{previousUsers}</Text>
+      </TouchableOpacity>
+
+      {/* Total Buildings */}
+      <TouchableOpacity style={styles.dashboardCard}>
+        <FontAwesome5 name="building" size={28} color="#2196F3" style={styles.cardIcon} />
+        <Text style={styles.cardTitle}>Total Buildings</Text>
+        <Text style={styles.cardValue}>{totalBuildings}</Text>
+      </TouchableOpacity>
+
+      {/* Total Rooms */}
+      <TouchableOpacity style={styles.dashboardCard}>
+        <Ionicons name="home" size={28} color="#9C27B0" style={styles.cardIcon} />
+        <Text style={styles.cardTitle}>Total Rooms</Text>
+        <Text style={styles.cardValue}>{totalRooms}</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+)}
 
         {/* Feedback Tab */}
         {activeTab === "Feedback" && (
@@ -380,7 +393,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   cardTitle: { fontSize: 16, fontWeight: "600", marginBottom: 8 },
-  cardValue: { fontSize: 22, fontWeight: "bold", color: "#FFA500" },
+  cardValue: { fontSize: 22, fontWeight: "bold", color: "#333" },
 
   settingsGrid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 20 },
   settingsCard: {
@@ -396,4 +409,9 @@ const styles = StyleSheet.create({
   },
   settingsCardTitle: { fontSize: 16, fontWeight: "bold", color: "#000", marginBottom: 6 },
   settingsCardDesc: { fontSize: 12, color: "#555" },
+ 
+cardIcon: {
+  marginBottom: 10,
+},
+
 });
