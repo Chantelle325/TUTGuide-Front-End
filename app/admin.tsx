@@ -5,13 +5,11 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Image,
-  Modal,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import API from "./api";
 
@@ -23,14 +21,38 @@ export default function AdminDashboard() {
   const [selectedFeedback, setSelectedFeedback] = useState<any | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [viewedFeedbackIds, setViewedFeedbackIds] = useState<number[]>([]);
+  const [darkMode, setDarkMode] = useState(false);
 
   const router = useRouter();
 
-  // Placeholder counts for dashboard cards
+  // Dashboard counts
   const [totalUsers, setTotalUsers] = useState(0);
   const [previousUsers, setPreviousUsers] = useState(0);
   const [totalBuildings, setTotalBuildings] = useState(0);
   const [totalRooms, setTotalRooms] = useState(0);
+
+  // Load token & system preferences
+  useEffect(() => {
+    const init = async () => {
+      const token = await AsyncStorage.getItem("userToken");
+      const darkPref = await AsyncStorage.getItem("darkMode");
+      setDarkMode(darkPref === "true");
+
+      if (!token) {
+        router.replace("/");
+      } else {
+        setAdminToken(token);
+        fetchDashboardCounts(token);
+      }
+      setLoading(false);
+    };
+    init();
+  }, []);
+
+  // Fetch feedbacks
+  useEffect(() => {
+    if (activeTab === "Feedback" && adminToken) fetchFeedbacks();
+  }, [activeTab, adminToken]);
 
   const handleViewFeedback = async (fb: any) => {
     try {
@@ -55,24 +77,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // Load token
-  useEffect(() => {
-    AsyncStorage.getItem("userToken").then((token) => {
-      if (!token) {
-        router.replace("/");
-      } else {
-        setAdminToken(token);
-        fetchDashboardCounts(token);
-      }
-      setLoading(false);
-    });
-  }, []);
-
-  // Fetch feedbacks
-  useEffect(() => {
-    if (activeTab === "Feedback" && adminToken) fetchFeedbacks();
-  }, [activeTab, adminToken]);
-
   const fetchFeedbacks = async () => {
     try {
       const response = await API.get(`/feedback/all`, {
@@ -80,31 +84,24 @@ export default function AdminDashboard() {
       });
 
       const allFeedbacks = response.data;
-
-      // Unread on top, sorted by newest first
       const sorted = allFeedbacks.sort((a: any, b: any) => {
         if (a.is_viewed !== b.is_viewed) {
-          return a.is_viewed - b.is_viewed; // unread (0) before viewed (1)
+          return a.is_viewed - b.is_viewed;
         }
-        return b.feedback_id - a.feedback_id; // newest first
+        return b.feedback_id - a.feedback_id;
       });
 
       setFeedbacks(sorted);
-
-      const unread = allFeedbacks.filter((fb: any) => fb.is_viewed === 0).length;
-      setUnreadCount(unread);
-
-      const viewedIds = allFeedbacks
-        .filter((fb: any) => fb.is_viewed === 1)
-        .map((fb: any) => fb.feedback_id);
-      setViewedFeedbackIds(viewedIds);
+      setUnreadCount(allFeedbacks.filter((fb: any) => fb.is_viewed === 0).length);
+      setViewedFeedbackIds(
+        allFeedbacks.filter((fb: any) => fb.is_viewed === 1).map((fb: any) => fb.feedback_id)
+      );
     } catch (err: any) {
       console.error(err.response?.data || err.message);
       Alert.alert("Error", "Failed to fetch feedbacks");
     }
   };
 
-  // Fetch dashboard counts
   const fetchDashboardCounts = async (token: string) => {
     try {
       const response = await API.get("/dashboard-counts", {
@@ -132,16 +129,18 @@ export default function AdminDashboard() {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, darkMode && styles.darkContainer]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, darkMode && styles.darkHeader]}>
         <View style={styles.headerLeft}>
           <View style={styles.logoContainer}>
-            <Ionicons name="map" size={28} color="#000" />
+            <Ionicons name="map" size={28} color={darkMode ? "#fff" : "#000"} />
           </View>
           <View>
-            <Text style={styles.headerTitle}>TUT Guide Admin</Text>
-            <Text style={styles.headerSubtitle}>Manage your app</Text>
+            <Text style={[styles.headerTitle, darkMode && styles.darkText]}>TUT Guide Admin</Text>
+            <Text style={[styles.headerSubtitle, darkMode && styles.darkText]}>
+              Manage your app
+            </Text>
           </View>
         </View>
         <TouchableOpacity
@@ -159,7 +158,7 @@ export default function AdminDashboard() {
             ]);
           }}
         >
-          <Ionicons name="log-out-outline" size={20} color="#000" />
+          <Ionicons name="log-out-outline" size={20} color={darkMode ? "#000" : "#000"} />
         </TouchableOpacity>
       </View>
 
@@ -168,23 +167,20 @@ export default function AdminDashboard() {
         {/* Dashboard Tab */}
         {activeTab === "Dashboard" && (
           <View style={styles.tabContent}>
-            <Text style={styles.tabTitle}>Dashboard</Text>
+            <Text style={[styles.tabTitle, darkMode && styles.darkText]}>Dashboard</Text>
             <View style={styles.dashboardGrid}>
               <TouchableOpacity style={styles.dashboardCard}>
                 <Text style={styles.cardTitle}>Total Users</Text>
                 <Text style={styles.cardValue}>{totalUsers}</Text>
               </TouchableOpacity>
-
               <TouchableOpacity style={styles.dashboardCard}>
                 <Text style={styles.cardTitle}>Previous Users</Text>
                 <Text style={styles.cardValue}>{previousUsers}</Text>
               </TouchableOpacity>
-
               <TouchableOpacity style={styles.dashboardCard}>
                 <Text style={styles.cardTitle}>Total Buildings</Text>
                 <Text style={styles.cardValue}>{totalBuildings}</Text>
               </TouchableOpacity>
-
               <TouchableOpacity style={styles.dashboardCard}>
                 <Text style={styles.cardTitle}>Total Rooms</Text>
                 <Text style={styles.cardValue}>{totalRooms}</Text>
@@ -196,11 +192,10 @@ export default function AdminDashboard() {
         {/* Feedback Tab */}
         {activeTab === "Feedback" && (
           <View style={styles.tabContent}>
-            <Text style={styles.tabTitle}>User Feedback</Text>
+            <Text style={[styles.tabTitle, darkMode && styles.darkText]}>User Feedback</Text>
             {feedbacks.length === 0 && <Text>No feedback yet.</Text>}
             {feedbacks.map((fb, idx) => {
               const isViewed = viewedFeedbackIds.includes(fb.feedback_id);
-
               return (
                 <View key={idx} style={styles.locationCard}>
                   <View style={styles.locationHeader}>
@@ -208,11 +203,11 @@ export default function AdminDashboard() {
                       style={[
                         styles.locationName,
                         isViewed && styles.viewedFeedbackText,
+                        darkMode && styles.darkText,
                       ]}
                     >
                       {fb.email ? fb.email.split("@")[0] : "Unknown"}
                     </Text>
-
                     <TouchableOpacity
                       style={[styles.viewButton, isViewed && styles.viewedButton]}
                       onPress={() => handleViewFeedback(fb)}
@@ -229,14 +224,37 @@ export default function AdminDashboard() {
         {/* Settings Tab */}
         {activeTab === "Settings" && (
           <View style={styles.tabContent}>
-            <Text style={styles.tabTitle}>Settings</Text>
-            <Text style={{ color: "#000" }}>Settings panel</Text>
+            <Text style={[styles.tabTitle, darkMode && styles.darkText]}>Settings</Text>
+            <View style={styles.settingsGrid}>
+              <TouchableOpacity style={styles.settingsCard} onPress={() => router.push("/profile")}>
+                <Text style={styles.settingsCardTitle}>Profile Management</Text>
+                <Text style={styles.settingsCardDesc}>
+                  Update your profile details and credentials
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.settingsCard}
+                onPress={() => router.push("/manage-users")}
+              >
+                <Text style={styles.settingsCardTitle}>Manage Users</Text>
+                <Text style={styles.settingsCardDesc}>Add, remove, or update user accounts</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.settingsCard}
+                onPress={() => router.push("/system-preferences")}
+              >
+                <Text style={styles.settingsCardTitle}>System Preferences</Text>
+                <Text style={styles.settingsCardDesc}>
+                  Configure system settings and preferences
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </ScrollView>
 
       {/* Footer Tabs */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, darkMode && styles.darkFooter]}>
         <View style={styles.tabContainer}>
           {["Dashboard", "Feedback", "Settings"].map((tab) => (
             <TouchableOpacity
@@ -245,22 +263,11 @@ export default function AdminDashboard() {
               onPress={() => setActiveTab(tab)}
             >
               <Ionicons
-                name={
-                  tab === "Dashboard"
-                    ? "home"
-                    : tab === "Feedback"
-                    ? "chatbubble-ellipses"
-                    : "settings"
-                }
+                name={tab === "Dashboard" ? "home" : tab === "Feedback" ? "chatbubble-ellipses" : "settings"}
                 size={20}
                 color={activeTab === tab ? "#000" : "#333"}
               />
-              <Text
-                style={[styles.tabText, activeTab === tab && styles.activeTabText]}
-              >
-                {tab}
-              </Text>
-
+              <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>{tab}</Text>
               {tab === "Feedback" && unreadCount > 0 && (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>{unreadCount}</Text>
@@ -270,45 +277,14 @@ export default function AdminDashboard() {
           ))}
         </View>
       </View>
-
-      {/* Modal */}
-      <Modal
-        visible={!!selectedFeedback}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setSelectedFeedback(null)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Feedback Report</Text>
-            <Text style={styles.modalEmail}>{selectedFeedback?.email}</Text>
-            <Text style={styles.modalMessage}>
-              {selectedFeedback?.feedback_message}
-            </Text>
-
-            {selectedFeedback?.attachment && (
-              <Image
-                source={{ uri: selectedFeedback.attachment }}
-                style={styles.attachment}
-                resizeMode="contain"
-              />
-            )}
-
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setSelectedFeedback(null)}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#eee" },
+  darkContainer: { backgroundColor: "#121212" },
+  darkText: { color: "#fff" },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -317,9 +293,8 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingBottom: 16,
     backgroundColor: "#bbb",
-    borderBottomWidth: 3,
-    borderBottomColor: "#fff",
   },
+  darkHeader: { backgroundColor: "#222" },
   headerLeft: { flexDirection: "row", alignItems: "center" },
   logoContainer: {
     width: 48,
@@ -341,28 +316,16 @@ const styles = StyleSheet.create({
   },
   content: { flex: 1, padding: 16 },
   tabContent: { gap: 16 },
-  tabTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 12,
-  },
+  tabTitle: { fontSize: 22, fontWeight: "bold", color: "#333", marginBottom: 12 },
   locationCard: {
     backgroundColor: "#fff",
     borderRadius: 14,
     padding: 16,
-    borderWidth: 2,
-    borderColor: "#fff",
     marginBottom: 10,
   },
-  locationHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 6,
-  },
+  locationHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   locationName: { fontSize: 16, fontWeight: "600", color: "#333" },
-  viewedFeedbackText: { color: "#999", fontStyle: "italic" }, // italic for viewed
+  viewedFeedbackText: { color: "#999", fontStyle: "italic" },
   viewButton: {
     backgroundColor: "#aaa",
     paddingVertical: 6,
@@ -372,12 +335,8 @@ const styles = StyleSheet.create({
   viewedButton: { backgroundColor: "#ddd" },
   viewButtonText: { color: "#fff", fontWeight: "800" },
 
-  // Footer
-  footer: {
-    borderTopWidth: 1,
-    borderTopColor: "#ccc",
-    backgroundColor: "#ddd",
-  },
+  footer: { borderTopWidth: 1, borderTopColor: "#ccc", backgroundColor: "#ddd" },
+  darkFooter: { backgroundColor: "#222", borderTopColor: "#444" },
   tabContainer: { flexDirection: "row" },
   tab: {
     flex: 1,
@@ -386,11 +345,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     position: "relative",
   },
-  activeTab: {
-    borderTopWidth: 3,
-    borderTopColor: "#000",
-    backgroundColor: "#aaa",
-  },
+  activeTab: { borderTopWidth: 3, borderTopColor: "#000", backgroundColor: "#aaa" },
   tabText: { color: "#333", fontSize: 14, marginTop: 4 },
   activeTabText: { color: "#000", fontWeight: "bold" },
 
@@ -408,42 +363,10 @@ const styles = StyleSheet.create({
   },
   badgeText: { color: "#fff", fontSize: 11, fontWeight: "bold" },
 
-  // Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 14,
-    width: "90%",
-    maxHeight: "80%",
-  },
-  modalTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 10 },
-  modalEmail: { fontSize: 14, color: "#555", marginBottom: 10 },
-  modalMessage: { fontSize: 16, marginBottom: 15 },
-  attachment: { width: "100%", height: 200, marginBottom: 15 },
-  closeButton: {
-    backgroundColor: "#333",
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  closeButtonText: { color: "#fff", fontWeight: "600" },
-
-  // Dashboard cards
-  dashboardGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    gap: 14,
-  },
+  dashboardGrid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", gap: 14 },
   dashboardCard: {
     backgroundColor: "#fff",
-    width: "43%", // two cards per row
+    width: "43%",
     borderRadius: 12,
     padding: 15,
     alignItems: "center",
@@ -453,9 +376,24 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 3,
-   marginLeft:10,
-   marginRight:8,
+    marginLeft: 10,
+    marginRight: 8,
   },
   cardTitle: { fontSize: 16, fontWeight: "600", marginBottom: 8 },
   cardValue: { fontSize: 22, fontWeight: "bold", color: "#FFA500" },
+
+  settingsGrid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginTop: 20 },
+  settingsCard: {
+    backgroundColor: "#f9f9f9",
+    padding: 16,
+    borderRadius: 10,
+    marginBottom: 15,
+    width: "48%",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  settingsCardTitle: { fontSize: 16, fontWeight: "bold", color: "#000", marginBottom: 6 },
+  settingsCardDesc: { fontSize: 12, color: "#555" },
 });
