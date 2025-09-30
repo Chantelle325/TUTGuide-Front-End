@@ -286,12 +286,8 @@ const ProfileScreen = () => {
             {/* Email */}
             <TouchableOpacity
               style={styles.infoRow}
-              onPress={() =>
-                router.push({
-                  pathname: '/edit-profile',
-                  params: { name: userData.name, email: userData.email },
-                })
-              }
+             
+              
             >
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Ionicons name="mail-outline" size={20} color="#000" style={{ marginRight: 10 }} />
@@ -299,7 +295,7 @@ const ProfileScreen = () => {
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <ThemedText style={styles.infoValue}>{userData.email}</ThemedText>
-                <Ionicons name="chevron-forward" size={20} color="#888" style={{ marginLeft: 5 }} />
+                
               </View>
             </TouchableOpacity>
 

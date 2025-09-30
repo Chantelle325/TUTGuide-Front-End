@@ -54,16 +54,7 @@ const EditProfileScreen = () => {
           />
         </View>
 
-        <View style={styles.inputContainer}>
-          <Ionicons name="mail" size={20} color="#000" style={{ marginRight: 10 }} />
-          <TextInput
-            style={styles.input}
-            placeholder="Update Email"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-          />
-        </View>
+      
 
         <TouchableOpacity style={styles.button} onPress={handleUpdate}>
           <ThemedText style={styles.buttonText}>Save Changes</ThemedText>
