@@ -3,15 +3,15 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import API from "./api";
 
@@ -72,11 +72,19 @@ export default function ManageUsers() {
           style: "destructive",
           onPress: async () => {
             try {
-              await API.delete(`/users/delete/${user.email}`, {
+              await API.delete(`/dashboard/delete-user`, {
                 headers: { Authorization: `Bearer ${token}` },
+                data: { email: user.email.trim().toLowerCase() },
               });
+
+              // Remove user locally from table
+              setUsers((prevUsers) =>
+                prevUsers.filter(
+                  (u) => u.email.trim().toLowerCase() !== user.email.trim().toLowerCase()
+                )
+              );
+
               Alert.alert("Success", "User deleted successfully");
-              fetchUsers(token);
             } catch (err: any) {
               console.error(err.response?.data || err.message);
               Alert.alert("Error", "Failed to delete user");
@@ -97,14 +105,26 @@ export default function ManageUsers() {
     if (!newEmail || !selectedUser) return;
 
     try {
-      await API.patch(
-        `/users/update-email/${selectedUser.email}`,
-        { email: newEmail },
+      await API.put(
+        "/dashboard/update-email",
+        {
+          currentEmail: selectedUser.email.trim().toLowerCase(),
+          newEmail: newEmail.trim().toLowerCase(),
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      // Update local state immediately
+      setUsers((prevUsers) =>
+        prevUsers.map((u) =>
+          u.email.trim().toLowerCase() === selectedUser.email.trim().toLowerCase()
+            ? { ...u, email: newEmail.trim().toLowerCase() }
+            : u
+        )
+      );
+
       Alert.alert("Success", "Email updated successfully");
       setModalVisible(false);
-      fetchUsers(token);
     } catch (err: any) {
       console.error(err.response?.data || err.message);
       Alert.alert("Error", "Failed to update email");
@@ -125,15 +145,29 @@ export default function ManageUsers() {
     <ScrollView style={[styles.container, darkMode && styles.darkContainer]}>
       <Text style={[styles.title, darkMode && styles.darkText]}>Manage Users</Text>
 
-      <TouchableOpacity style={styles.addButton} onPress={() => router.push("/add-user")}>
-        <Ionicons name="person-add" size={20} color="#fff" style={{ marginRight: 8 }} />
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => router.push("/add-user")}
+      >
+        <Ionicons
+          name="person-add"
+          size={20}
+          color="#fff"
+          style={{ marginRight: 8 }}
+        />
         <Text style={styles.addButtonText}>Add New User</Text>
       </TouchableOpacity>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View style={styles.tableContainer}>
           {/* Table Header */}
-          <View style={[styles.tableRow, styles.tableHeader, darkMode && styles.darkTableHeader]}>
+          <View
+            style={[
+              styles.tableRow,
+              styles.tableHeader,
+              darkMode && styles.darkTableHeader,
+            ]}
+          >
             <Text style={[styles.tableCell, styles.nameColumn]}>Name</Text>
             <Text style={[styles.tableCell, styles.emailColumn]}>Email</Text>
             <Text style={[styles.tableCell, styles.roleColumn]}>Role</Text>
@@ -150,14 +184,32 @@ export default function ManageUsers() {
                 darkMode && styles.darkRow,
               ]}
             >
-              <Text style={[styles.tableCell, styles.nameColumn]}>{user.fullName}</Text>
-              <Text style={[styles.tableCell, styles.emailColumn]}>{user.email}</Text>
-              <Text style={[styles.tableCell, styles.roleColumn]}>{user.role}</Text>
-              <View style={[styles.tableCell, styles.actionColumn, styles.actionButtons]}>
-                <TouchableOpacity style={styles.editButton} onPress={() => handleEditEmail(user)}>
+              <Text style={[styles.tableCell, styles.nameColumn]}>
+                {user.fullName}
+              </Text>
+              <Text style={[styles.tableCell, styles.emailColumn]}>
+                {user.email}
+              </Text>
+              <Text style={[styles.tableCell, styles.roleColumn]}>
+                {user.role}
+              </Text>
+              <View
+                style={[
+                  styles.tableCell,
+                  styles.actionColumn,
+                  styles.actionButtons,
+                ]}
+              >
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={() => handleEditEmail(user)}
+                >
                   <MaterialIcons name="edit" size={18} color="#fff" />
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeleteUser(user)}>
+                <TouchableOpacity
+                  style={styles.deleteButton}
+                  onPress={() => handleDeleteUser(user)}
+                >
                   <Ionicons name="trash" size={18} color="#fff" />
                 </TouchableOpacity>
               </View>
@@ -171,7 +223,9 @@ export default function ManageUsers() {
         <View style={styles.modalBackground}>
           <View style={[styles.modalContainer, darkMode && styles.darkUserCard]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, darkMode && styles.darkText]}>Edit Email</Text>
+              <Text style={[styles.modalTitle, darkMode && styles.darkText]}>
+                Edit Email
+              </Text>
               <Ionicons
                 name="close"
                 size={24}
@@ -192,7 +246,10 @@ export default function ManageUsers() {
               <TouchableOpacity style={styles.saveButton} onPress={saveEmail}>
                 <Text style={styles.actionText}>Save</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.cancelButton} onPress={() => setModalVisible(false)}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setModalVisible(false)}
+              >
                 <Text style={styles.actionText}>Cancel</Text>
               </TouchableOpacity>
             </View>
@@ -220,8 +277,19 @@ const styles = StyleSheet.create({
   },
   addButtonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
 
-  tableContainer: { borderRadius: 8, overflow: "hidden", borderWidth: 1, borderColor: "#ddd", minWidth: 600 },
-  tableRow: { flexDirection: "row", paddingVertical: 12, paddingHorizontal: 8, alignItems: "center" },
+  tableContainer: {
+    borderRadius: 8,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    minWidth: 600,
+  },
+  tableRow: {
+    flexDirection: "row",
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    alignItems: "center",
+  },
   tableHeader: { backgroundColor: "#e0e0e0" },
   darkTableHeader: { backgroundColor: "#2c2c2c" },
   tableCell: { paddingHorizontal: 8 },
@@ -245,14 +313,44 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  modalContainer: { width: "90%", backgroundColor: "#fff", padding: 20, borderRadius: 12 },
+  modalContainer: {
+    width: "90%",
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 12,
+  },
   darkUserCard: { backgroundColor: "#1e1e1e" },
-  modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
   modalTitle: { fontSize: 18, fontWeight: "700" },
   modalLabel: { marginBottom: 8 },
-  input: { borderWidth: 1, borderColor: "#ccc", padding: 12, borderRadius: 8, marginBottom: 16, color: "#000" },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    color: "#000",
+  },
   darkInput: { borderColor: "#555", color: "#fff" },
   modalActions: { flexDirection: "row", justifyContent: "space-between" },
-  saveButton: { flex: 1, padding: 12, borderRadius: 8, alignItems: "center", marginRight: 8, backgroundColor: "#4CAF50" },
-  cancelButton: { flex: 1, padding: 12, borderRadius: 8, alignItems: "center", backgroundColor: "#F44336" },
+  saveButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginRight: 8,
+    backgroundColor: "#4CAF50",
+  },
+  cancelButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    backgroundColor: "#F44336",
+  },
 });
