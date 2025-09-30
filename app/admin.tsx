@@ -177,14 +177,14 @@ export default function AdminDashboard() {
     <View style={styles.dashboardGrid}>
       
       {/* Total Users */}
-      <TouchableOpacity style={styles.dashboardCard}>
+      <TouchableOpacity style={styles.dashboardCard} onPress={() => router.push("/total-users")}>
         <Ionicons name="people" size={28} color="#4CAF50" style={styles.cardIcon} />
         <Text style={styles.cardTitle}>Total Users</Text>
         <Text style={styles.cardValue}>{totalUsers}</Text>
       </TouchableOpacity>
 
       {/* Previous Users */}
-      <TouchableOpacity style={styles.dashboardCard}>
+      <TouchableOpacity style={styles.dashboardCard} onPress={() => router.push("/previous-users")}>
         <MaterialIcons name="history" size={28} color="#FF9800" style={styles.cardIcon} />
         <Text style={styles.cardTitle}>Previous Users</Text>
         <Text style={styles.cardValue}>{previousUsers}</Text>
@@ -274,7 +274,7 @@ export default function AdminDashboard() {
           <View style={styles.tabContent}>
             <Text style={[styles.tabTitle, darkMode && styles.darkText]}>Settings</Text>
             <View style={styles.settingsGrid}>
-              <TouchableOpacity style={styles.settingsCard} onPress={() => router.push("/profile")}>
+              <TouchableOpacity style={styles.settingsCard} onPress={() => router.push("/admin-profile")}>
                 <Text style={styles.settingsCardTitle}>Profile Management</Text>
                 <Text style={styles.settingsCardDesc}>
                   Update your profile details and credentials
