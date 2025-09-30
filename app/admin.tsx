@@ -6,13 +6,18 @@ import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View
 } from "react-native";
+import { LineChart } from "react-native-chart-kit";
 import API from "./api";
+
+const screenWidth = Dimensions.get("window").width;
+
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("Dashboard");
@@ -199,6 +204,36 @@ export default function AdminDashboard() {
         <Text style={styles.cardValue}>{totalRooms}</Text>
       </TouchableOpacity>
     </View>
+    {/* Stats Graph */}
+  <View style={{ marginVertical: 20 }}>
+  <Text style={[styles.tabTitle, darkMode && styles.darkText]}>Statistics Overview</Text>
+  <LineChart
+    data={{
+      labels: ["Total Users", "Previous Users", "Buildings", "Rooms"],
+      datasets: [
+        {
+          data: [totalUsers, previousUsers, totalBuildings, totalRooms],
+          color: () => darkMode ? "#FFA500" : "#4CAF50", // optional
+          strokeWidth: 2,
+        },
+      ],
+    }}
+    width={screenWidth - 32} // padding from parent
+    height={220}
+    yAxisLabel=""
+    chartConfig={{
+      backgroundColor: darkMode ? "#121212" : "#fff",
+      backgroundGradientFrom: darkMode ? "#121212" : "#fff",
+      backgroundGradientTo: darkMode ? "#333" : "#fff",
+      decimalPlaces: 0,
+      color: (opacity = 1) => darkMode ? `rgba(255,255,255,${opacity})` : `rgba(0,0,0,${opacity})`,
+      labelColor: (opacity = 1) => darkMode ? `rgba(255,255,255,${opacity})` : `rgba(0,0,0,${opacity})`,
+      style: { borderRadius: 16 },
+      propsForDots: { r: "6", strokeWidth: "2", stroke: "#ffa500" },
+    }}
+    style={{ borderRadius: 16 }}
+  />
+  </View>
   </View>
 )}
 
