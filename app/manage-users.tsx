@@ -77,10 +77,11 @@ export default function ManageUsers() {
                 data: { email: user.email.trim().toLowerCase() },
               });
 
-              // Remove user locally from table
               setUsers((prevUsers) =>
                 prevUsers.filter(
-                  (u) => u.email.trim().toLowerCase() !== user.email.trim().toLowerCase()
+                  (u) =>
+                    u.email.trim().toLowerCase() !==
+                    user.email.trim().toLowerCase()
                 )
               );
 
@@ -114,10 +115,10 @@ export default function ManageUsers() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Update local state immediately
       setUsers((prevUsers) =>
         prevUsers.map((u) =>
-          u.email.trim().toLowerCase() === selectedUser.email.trim().toLowerCase()
+          u.email.trim().toLowerCase() ===
+          selectedUser.email.trim().toLowerCase()
             ? { ...u, email: newEmail.trim().toLowerCase() }
             : u
         )
@@ -143,7 +144,9 @@ export default function ManageUsers() {
 
   return (
     <ScrollView style={[styles.container, darkMode && styles.darkContainer]}>
-      <Text style={[styles.title, darkMode && styles.darkText]}>Manage Users</Text>
+      <Text style={[styles.title, darkMode && styles.darkText]}>
+        Manage Users
+      </Text>
 
       <TouchableOpacity
         style={styles.addButton}
@@ -184,13 +187,31 @@ export default function ManageUsers() {
                 darkMode && styles.darkRow,
               ]}
             >
-              <Text style={[styles.tableCell, styles.nameColumn]}>
+              <Text
+                style={[
+                  styles.tableCell,
+                  styles.nameColumn,
+                  darkMode && styles.darkTableText,
+                ]}
+              >
                 {user.fullName}
               </Text>
-              <Text style={[styles.tableCell, styles.emailColumn]}>
+              <Text
+                style={[
+                  styles.tableCell,
+                  styles.emailColumn,
+                  darkMode && styles.darkTableText,
+                ]}
+              >
                 {user.email}
               </Text>
-              <Text style={[styles.tableCell, styles.roleColumn]}>
+              <Text
+                style={[
+                  styles.tableCell,
+                  styles.roleColumn,
+                  darkMode && styles.darkTableText,
+                ]}
+              >
                 {user.role}
               </Text>
               <View
@@ -291,7 +312,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tableHeader: { backgroundColor: "#e0e0e0" },
-  darkTableHeader: { backgroundColor: "#2c2c2c" },
+  darkTableHeader: { backgroundColor: "#aaa" },
   tableCell: { paddingHorizontal: 8 },
   nameColumn: { minWidth: 150, fontWeight: "600" },
   emailColumn: { minWidth: 250 },
@@ -301,6 +322,7 @@ const styles = StyleSheet.create({
   evenRow: { backgroundColor: "#fafafa" },
   oddRow: { backgroundColor: "#fff" },
   darkRow: { backgroundColor: "#1b1b1b" },
+  darkTableText: { color: "#fff" },
 
   actionButtons: { flexDirection: "row", gap: 8 },
   editButton: { backgroundColor: "#4CAF50", padding: 6, borderRadius: 6 },

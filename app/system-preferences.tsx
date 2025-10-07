@@ -1,11 +1,39 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 
 export default function SystemPreferences() {
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [autoUpdates, setAutoUpdates] = useState(true);
+
+  // ✅ Load preferences on mount
+  useEffect(() => {
+    const loadPreferences = async () => {
+      const darkPref = await AsyncStorage.getItem("darkMode");
+      const notifPref = await AsyncStorage.getItem("notifications");
+      const updatePref = await AsyncStorage.getItem("autoUpdates");
+
+      if (darkPref !== null) setDarkMode(darkPref === "true");
+      if (notifPref !== null) setNotifications(notifPref === "true");
+      if (updatePref !== null) setAutoUpdates(updatePref === "true");
+    };
+    loadPreferences();
+  }, []);
+
+  // ✅ Save preferences whenever they change
+  useEffect(() => {
+    AsyncStorage.setItem("darkMode", darkMode.toString());
+  }, [darkMode]);
+
+  useEffect(() => {
+    AsyncStorage.setItem("notifications", notifications.toString());
+  }, [notifications]);
+
+  useEffect(() => {
+    AsyncStorage.setItem("autoUpdates", autoUpdates.toString());
+  }, [autoUpdates]);
 
   // Dynamic styles
   const themeStyles = darkMode ? darkTheme : lightTheme;
@@ -25,7 +53,10 @@ export default function SystemPreferences() {
         </View>
         <Switch
           value={darkMode}
-          onValueChange={setDarkMode}
+          onValueChange={(val) => {
+            setDarkMode(val);
+            AsyncStorage.setItem("darkMode", val.toString());
+          }}
           thumbColor={darkMode ? "#4CAF50" : "#f4f3f4"}
         />
       </View>
@@ -41,7 +72,10 @@ export default function SystemPreferences() {
         </View>
         <Switch
           value={notifications}
-          onValueChange={setNotifications}
+          onValueChange={(val) => {
+            setNotifications(val);
+            AsyncStorage.setItem("notifications", val.toString());
+          }}
           thumbColor={notifications ? "#4CAF50" : "#f4f3f4"}
         />
       </View>
@@ -57,7 +91,10 @@ export default function SystemPreferences() {
         </View>
         <Switch
           value={autoUpdates}
-          onValueChange={setAutoUpdates}
+          onValueChange={(val) => {
+            setAutoUpdates(val);
+            AsyncStorage.setItem("autoUpdates", val.toString());
+          }}
           thumbColor={autoUpdates ? "#4CAF50" : "#f4f3f4"}
         />
       </View>
