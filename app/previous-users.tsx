@@ -1,11 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  View,
 } from "react-native";
 import API from "./api";
 
@@ -27,6 +27,7 @@ export default function PreviousUsers() {
           headers: { Authorization: `Bearer ${savedToken}` },
         });
         console.log("Previous users API response:", response.data); // check API fields
+        setUsers(response.data.data || []);
         setUsers(response.data.data || []);
       } catch (err: any) {
         console.error(err.response?.data || err.message);
@@ -58,7 +59,7 @@ export default function PreviousUsers() {
       ) : (
         <FlatList
           data={users}
-          keyExtractor={(item, index) => (item.user_id ?? index).toString()}
+          keyExtractor={(item, index) => (item.prev_user_id ?? index).toString()}
           renderItem={({ item, index }) => (
             <View style={[styles.userCard, darkMode && styles.darkUserCard]}>
               <Text style={[styles.userName, darkMode && styles.darkText]}>

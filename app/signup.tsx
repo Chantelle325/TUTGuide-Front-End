@@ -39,16 +39,34 @@ export default function SignUpScreen() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [loading, setLoading] = useState(false); // ✅ new state
+  const [loading, setLoading] = useState(false);
+
+  // Password strength state
+  const [passwordStrength, setPasswordStrength] = useState<'Weak' | 'Medium' | 'Strong' | ''>('');
+
+  // Check password strength function
+  const checkPasswordStrength = (pass: string) => {
+    if (!pass) return '';
+    const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+    const mediumRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{6,}$/;
+
+    if (strongRegex.test(pass)) return 'Strong';
+    if (mediumRegex.test(pass)) return 'Medium';
+    return 'Weak';
+  };
 
   const handleSignUp = async () => {
     if (!fullName.trim()) return Alert.alert('Error', 'Please enter your full name');
     if (!email.trim()) return Alert.alert('Error', 'Please enter your email');
-    if (password.trim() !== confirmPassword.trim()) return Alert.alert('Error', 'Passwords do not match');
-    if (password.trim().length < 6) return Alert.alert('Error', 'Password must be at least 6 characters');
+    if (password.trim() !== confirmPassword.trim())
+      return Alert.alert('Error', 'Passwords do not match');
+
+    const strength = checkPasswordStrength(password.trim());
+    if (strength !== 'Strong')
+      return Alert.alert('Weak Password', 'Password must be at least 8 characters long, include uppercase, lowercase, number, and special character.');
 
     try {
-      setLoading(true); // ✅ start loading
+      setLoading(true);
 
       const response = await API.post('/auth/register', {
         fullName: fullName.trim(),
@@ -74,7 +92,7 @@ export default function SignUpScreen() {
       console.log("Registration error:", err.response?.data || err.message);
       Alert.alert("Error", err.response?.data?.message || "Registration failed");
     } finally {
-      setLoading(false); // ✅ stop loading
+      setLoading(false);
     }
   };
 
@@ -87,7 +105,7 @@ export default function SignUpScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        {/* FULL-WIDTH HEADER */}
+        {/* HEADER */}
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             <View style={styles.logoCircle}>
@@ -101,7 +119,7 @@ export default function SignUpScreen() {
           </View>
         </View>
 
-        {/* WHITE CONTENT AREA */}
+        {/* CONTENT AREA */}
         <View style={styles.contentContainer}>
           <ScrollView
             keyboardShouldPersistTaps="handled"
@@ -136,7 +154,7 @@ export default function SignUpScreen() {
               />
             </View>
 
-            {/* SIGN UP AS */}
+            {/* ROLE */}
             <View style={styles.inputBlock}>
               <Text style={styles.inputLabel}>Sign up as:</Text>
               {PickerComponent ? (
@@ -168,7 +186,10 @@ export default function SignUpScreen() {
                   placeholder="Enter your password"
                   placeholderTextColor="#555555"
                   value={password}
-                  onChangeText={setPassword}
+                  onChangeText={(text) => {
+                    setPassword(text);
+                    setPasswordStrength(checkPasswordStrength(text));
+                  }}
                   secureTextEntry={!showPassword}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
@@ -179,6 +200,15 @@ export default function SignUpScreen() {
                   />
                 </TouchableOpacity>
               </View>
+              {password ? (
+                <Text style={{
+                  color: passwordStrength === 'Weak' ? 'red' : passwordStrength === 'Medium' ? 'orange' : 'green',
+                  marginTop: 4,
+                  fontWeight: '600'
+                }}>
+                  Password Strength: {passwordStrength}
+                </Text>
+              ) : null}
             </View>
 
             {/* CONFIRM PASSWORD */}
@@ -218,7 +248,7 @@ export default function SignUpScreen() {
               )}
             </TouchableOpacity>
 
-            {/* Already have an account */}
+            {/* ALREADY HAVE ACCOUNT */}
             <View style={styles.bottomTextContainer}>
               <Text style={styles.bottomText}>
                 Already have an account?{' '}

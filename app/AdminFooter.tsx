@@ -9,25 +9,29 @@ type Props = {
 };
 
 export default function AdminFooter({ activeTab, setActiveTab, darkMode }: Props) {
+  const tabs = ["Dashboard", "Users", "Reports", "Settings"];
+
   return (
-    <View style={[styles.footer, darkMode && { backgroundColor: "#222" }]}>
-      {["Dashboard", "Users", "Reports", "Settings"].map((tab) => (
-        <TouchableOpacity
-          key={tab}
-          style={styles.footerButton}
-          onPress={() => setActiveTab(tab)}
-        >
-          <Text
-            style={[
-              styles.footerText,
-              activeTab === tab && { color: darkMode ? "#FFA500" : "#4CAF50" },
-              darkMode && { color: "#fff" },
-            ]}
+    <View style={[styles.footer, darkMode ? styles.darkFooter : null]}>
+      {tabs.map((tab) => {
+        const isActive = activeTab === tab;
+
+        let textColor = "#000"; // default light mode inactive
+        if (darkMode) textColor = "#fff"; // dark mode all white
+        else if (isActive) textColor = "#4CAF50"; // light mode active green
+
+        return (
+          <TouchableOpacity
+            key={tab}
+            style={styles.footerButton}
+            onPress={() => setActiveTab(tab)}
           >
-            {tab}
-          </Text>
-        </TouchableOpacity>
-      ))}
+            <Text style={[styles.footerText, { color: textColor }]}>
+              {tab}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 }
@@ -41,12 +45,15 @@ const styles = StyleSheet.create({
     borderTopColor: "#ddd",
     backgroundColor: "#fff",
   },
+  darkFooter: {
+    backgroundColor: "#222",
+    borderTopColor: "#444",
+  },
   footerButton: {
     alignItems: "center",
   },
   footerText: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#000",
   },
 });

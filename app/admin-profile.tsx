@@ -1,19 +1,20 @@
 import { ThemedText } from '@/components/ThemedText';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Speech from 'expo-speech';
 import React, { useEffect, useState } from 'react';
 import {
-    Image,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    TouchableOpacity,
-    View,
+  Image,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import API from './api'; // centralized Axios instance with JWT
 
@@ -21,6 +22,7 @@ const ProfileScreen = () => {
   const router = useRouter();
   const { name: paramName, email: paramEmail } = useLocalSearchParams();
 
+  const [darkMode, setDarkMode] = useState(false); // Dark mode state
   const [userData, setUserData] = useState({
     _id: '',
     name: '',
@@ -32,7 +34,6 @@ const ProfileScreen = () => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [clickSound, setClickSound] = useState<Audio.Sound | null>(null);
 
-  // --- MODAL STATE ---
   const [modalVisible, setModalVisible] = useState(false);
   const [modalConfig, setModalConfig] = useState({
     title: '',
@@ -45,18 +46,19 @@ const ProfileScreen = () => {
 
   // --- INITIAL LOAD ---
   useEffect(() => {
-    fetchUserDetails();
-    const setup = async () => {
+    const init = async () => {
+      const darkPref = await AsyncStorage.getItem('darkMode');
+      setDarkMode(darkPref === 'true');
+      await fetchUserDetails();
       await loadSound();
     };
-    setup();
+    init();
 
     return () => {
       unloadSound();
     };
   }, []);
 
-  // --- FETCH USER DETAILS ---
   const fetchUserDetails = async () => {
     try {
       const response = await API.get('/users/details');
@@ -75,11 +77,8 @@ const ProfileScreen = () => {
     }
   };
 
-  // --- AUDIO ---
   const loadSound = async () => {
-    const { sound } = await Audio.Sound.createAsync(
-      require('../assets/click.wav')
-    );
+    const { sound } = await Audio.Sound.createAsync(require('../assets/click.wav'));
     setClickSound(sound);
   };
 
@@ -92,11 +91,9 @@ const ProfileScreen = () => {
     if (callback) callback();
   };
 
-  // --- IMAGE PICKER ---
   const pickImage = async () => {
     if (Platform.OS !== 'web') {
-      const { status } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
         showModal({
           title: 'Permission Required',
@@ -137,11 +134,9 @@ const ProfileScreen = () => {
     } as any);
 
     try {
-      const response = await API.put(
-        '/users/update/profilePic',
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      );
+      const response = await API.put('/users/update/profilePic', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
 
       if (response.data.success) {
         setUserData({
@@ -179,18 +174,15 @@ const ProfileScreen = () => {
     }
   };
 
-  // --- SHOW CUSTOM MODAL ---
   const showModal = (config: typeof modalConfig) => {
     setModalConfig(config);
     setModalVisible(true);
   };
 
-  // --- LOGOUT ---
   const handleLogout = () => {
     showModal({
       title: 'Logging Out',
-      message:
-        'Are you sure you want to log out? You will need to log in again to access your profile.',
+      message: 'Are you sure you want to log out? You will need to log in again.',
       confirmText: 'Log Out',
       cancelText: 'Cancel',
       type: 'danger',
@@ -198,13 +190,11 @@ const ProfileScreen = () => {
     });
   };
 
-  // --- DELETE PROFILE ---
   const handleDeleteProfile = () => {
     Speech.speak('Warning! Your profile will be permanently deleted.');
     showModal({
       title: 'Delete Account',
-      message:
-        'This action will permanently remove your account and all data. Are you sure you want to continue?',
+      message: 'This action will permanently remove your account and all data. Continue?',
       confirmText: 'Yes, Delete',
       cancelText: 'Cancel',
       type: 'danger',
@@ -219,53 +209,47 @@ const ProfileScreen = () => {
     });
   };
 
-  // --- RENDER ---
   return (
     <>
-      {/* Hide Expo Router default header */}
       <Stack.Screen options={{ headerShown: false }} />
 
-      <View style={{ flex: 1, backgroundColor: 'white' }}>
+      <View style={[styles.container, { backgroundColor: darkMode ? '#121212' : '#fff' }]}>
         <ScrollView
           style={{ flex: 1 }}
           contentContainerStyle={{ paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
         >
-          {/* Custom HEADER */}
-          <View style={styles.header}>
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={styles.backButton}
-            >
-              <Ionicons name="arrow-back" size={24} color="#000" />
+          {/* HEADER */}
+          <View style={[styles.header, { backgroundColor: darkMode ? '#121212' : '#fff', borderBottomColor: darkMode ? '#333' : '#eee' }]}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color={darkMode ? '#fff' : '#000'} />
             </TouchableOpacity>
-            <ThemedText style={styles.headerTitle}>Profile</ThemedText>
+            <ThemedText style={[styles.headerTitle, { color: darkMode ? '#fff' : '#000' }]}>Profile</ThemedText>
           </View>
 
           {/* PROFILE IMAGE */}
-          <View style={styles.profileSection}>
+          <View style={[styles.profileSection, { backgroundColor: darkMode ? '#1b1b1b' : '#f5f5f5' }]}>
             <View style={styles.imageContainer}>
               {profileImage ? (
                 <Image source={{ uri: profileImage }} style={styles.profileImage} />
               ) : (
-                <View style={[styles.profileImage, styles.placeholderContainer]}>
-                  <Ionicons name="person" size={50} color="#888" />
+                <View style={[styles.profileImage, styles.placeholderContainer, { backgroundColor: darkMode ? '#333' : '#ddd' }]}>
+                  <Ionicons name="person" size={50} color={darkMode ? '#ccc' : '#888'} />
                 </View>
               )}
               <TouchableOpacity style={styles.cameraButton} onPress={pickImage}>
                 <Ionicons name="camera" size={20} color="white" />
               </TouchableOpacity>
             </View>
-            <ThemedText style={styles.userName}>{userData.name}</ThemedText>
+            <ThemedText style={[styles.userName, { color: darkMode ? '#fff' : '#000' }]}>{userData.name}</ThemedText>
           </View>
 
           {/* PERSONAL INFO */}
-          <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Personal Info</ThemedText>
-
+          <View style={[styles.section, { backgroundColor: darkMode ? '#1b1b1b' : '#f5f5f5' }]}>
+            <ThemedText style={[styles.sectionTitle, { color: darkMode ? '#fff' : '#000' }]}>Personal Info</ThemedText>
             {/* Name */}
             <TouchableOpacity
-              style={styles.infoRow}
+              style={[styles.infoRow, { borderBottomColor: darkMode ? '#333' : '#e5e5e5' }]}
               onPress={() =>
                 router.push({
                   pathname: '/edit-profile',
@@ -274,56 +258,43 @@ const ProfileScreen = () => {
               }
             >
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons name="person-outline" size={20} color="#000" style={{ marginRight: 10 }} />
-                <ThemedText style={styles.infoLabel}>Name</ThemedText>
+                <Ionicons name="person-outline" size={20} color={darkMode ? '#fff' : '#000'} style={{ marginRight: 10 }} />
+                <ThemedText style={[styles.infoLabel, { color: darkMode ? '#fff' : '#333' }]}>Name</ThemedText>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <ThemedText style={styles.infoValue}>{userData.name}</ThemedText>
-                <Ionicons name="chevron-forward" size={20} color="#888" style={{ marginLeft: 5 }} />
+                <ThemedText style={[styles.infoValue, { color: darkMode ? '#ccc' : '#555' }]}>{userData.name}</ThemedText>
+                <Ionicons name="chevron-forward" size={20} color={darkMode ? '#fff' : '#888'} style={{ marginLeft: 5 }} />
               </View>
             </TouchableOpacity>
 
             {/* Email */}
-            <TouchableOpacity
-              style={styles.infoRow}
-             
-              
-            >
+            <TouchableOpacity style={[styles.infoRow, { borderBottomColor: darkMode ? '#333' : '#e5e5e5' }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons name="mail-outline" size={20} color="#000" style={{ marginRight: 10 }} />
-                <ThemedText style={styles.infoLabel}>Email</ThemedText>
+                <Ionicons name="mail-outline" size={20} color={darkMode ? '#fff' : '#000'} style={{ marginRight: 10 }} />
+                <ThemedText style={[styles.infoLabel, { color: darkMode ? '#fff' : '#333' }]}>Email</ThemedText>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <ThemedText style={styles.infoValue}>{userData.email}</ThemedText>
-                
+                <ThemedText style={[styles.infoValue, { color: darkMode ? '#ccc' : '#555' }]}>{userData.email}</ThemedText>
               </View>
             </TouchableOpacity>
 
             {/* Change Password */}
-            <TouchableOpacity
-              style={styles.infoRow}
-              onPress={() => router.push('./change-password')}
-            >
+            <TouchableOpacity style={[styles.infoRow, { borderBottomColor: darkMode ? '#333' : '#e5e5e5' }]} onPress={() => router.push('./change-password')}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons
-                  name="lock-closed-outline"
-                  size={20}
-                  color="#000"
-                  style={{ marginRight: 10 }}
-                />
-                <ThemedText style={styles.infoLabel}>Change Password</ThemedText>
+                <Ionicons name="lock-closed-outline" size={20} color={darkMode ? '#fff' : '#000'} style={{ marginRight: 10 }} />
+                <ThemedText style={[styles.infoLabel, { color: darkMode ? '#fff' : '#333' }]}>Change Password</ThemedText>
               </View>
               <View>
-                <Ionicons name="chevron-forward" size={20} color="#888" />
+                <Ionicons name="chevron-forward" size={20} color={darkMode ? '#fff' : '#888'} />
               </View>
             </TouchableOpacity>
           </View>
 
           {/* SETTINGS */}
-          <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>App Settings</ThemedText>
+          <View style={[styles.section, { backgroundColor: darkMode ? '#1b1b1b' : '#f5f5f5' }]}>
+            <ThemedText style={[styles.sectionTitle, { color: darkMode ? '#fff' : '#000' }]}>App Settings</ThemedText>
             <View style={styles.switchRow}>
-              <ThemedText style={styles.switchLabel}>Voice Guidance</ThemedText>
+              <ThemedText style={[styles.switchLabel, { color: darkMode ? '#fff' : '#000' }]}>Voice Guidance</ThemedText>
               <Switch
                 value={voiceEnabled}
                 onValueChange={(val) => setVoiceEnabled(val)}
@@ -332,7 +303,7 @@ const ProfileScreen = () => {
               />
             </View>
             <View style={styles.switchRow}>
-              <ThemedText style={styles.switchLabel}>App Sounds</ThemedText>
+              <ThemedText style={[styles.switchLabel, { color: darkMode ? '#fff' : '#000' }]}>App Sounds</ThemedText>
               <Switch
                 value={soundEnabled}
                 onValueChange={(val) => setSoundEnabled(val)}
@@ -343,18 +314,18 @@ const ProfileScreen = () => {
           </View>
 
           {/* ABOUT & ACTIONS */}
-          <View style={styles.section}>
+          <View style={[styles.section, { backgroundColor: darkMode ? '#1b1b1b' : '#f5f5f5' }]}>
             <TouchableOpacity
-              style={[styles.smallButton, { marginBottom: 10 }]}
+              style={[styles.smallButton, { marginBottom: 10, backgroundColor: darkMode ? '#222' : '#f5f5f5' }]}
               onPress={() => router.push('/about-us')}
             >
-              <Ionicons name="information-circle-outline" size={20} color="#000" style={{ marginRight: 10 }} />
-              <ThemedText style={[styles.smallButtonText, { color: '#000' }]}>About Us</ThemedText>
+              <Ionicons name="information-circle-outline" size={20} color={darkMode ? '#fff' : '#000'} style={{ marginRight: 10 }} />
+              <ThemedText style={[styles.smallButtonText, { color: darkMode ? '#fff' : '#000' }]}>About Us</ThemedText>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.smallButton} onPress={handleLogout}>
-              <Ionicons name="log-out-outline" size={20} color="#000" style={{ marginRight: 10 }} />
-              <ThemedText style={styles.smallButtonText}>Log Out</ThemedText>
+            <TouchableOpacity style={[styles.smallButton, { backgroundColor: darkMode ? '#222' : '#f5f5f5' }]} onPress={handleLogout}>
+              <Ionicons name="log-out-outline" size={20} color={darkMode ? '#fff' : '#000'} style={{ marginRight: 10 }} />
+              <ThemedText style={[styles.smallButtonText, { color: darkMode ? '#fff' : '#000' }]}>Log Out</ThemedText>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -368,35 +339,19 @@ const ProfileScreen = () => {
         </ScrollView>
 
         {/* --- CUSTOM MODAL --- */}
-        <Modal
-          visible={modalVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setModalVisible(false)}
-        >
+        <Modal visible={modalVisible} transparent animationType="fade" onRequestClose={() => setModalVisible(false)}>
           <View style={styles.modalOverlay}>
-            <View
-              style={[
-                styles.modalContainer,
-                modalConfig.type === 'danger' && { borderColor: '#ccc' },
-              ]}
-            >
-              <ThemedText style={styles.modalTitle}>{modalConfig.title}</ThemedText>
-              <ThemedText style={styles.modalMessage}>{modalConfig.message}</ThemedText>
+            <View style={[styles.modalContainer, { backgroundColor: darkMode ? '#1b1b1b' : '#fff', borderColor: darkMode ? '#555' : '#000' }]}>
+              <ThemedText style={[styles.modalTitle, { color: darkMode ? '#fff' : '#000' }]}>{modalConfig.title}</ThemedText>
+              <ThemedText style={[styles.modalMessage, { color: darkMode ? '#ccc' : '#333' }]}>{modalConfig.message}</ThemedText>
               <View style={styles.modalButtons}>
                 {modalConfig.cancelText ? (
-                  <TouchableOpacity
-                    style={[styles.modalButton, { backgroundColor: '#ccc' }]}
-                    onPress={() => setModalVisible(false)}
-                  >
+                  <TouchableOpacity style={[styles.modalButton, { backgroundColor: '#ccc' }]} onPress={() => setModalVisible(false)}>
                     <ThemedText>{modalConfig.cancelText}</ThemedText>
                   </TouchableOpacity>
                 ) : null}
                 <TouchableOpacity
-                  style={[
-                    styles.modalButton,
-                    modalConfig.type === 'danger' && { backgroundColor: 'red' },
-                  ]}
+                  style={[styles.modalButton, modalConfig.type === 'danger' && { backgroundColor: 'red' }]}
                   onPress={() => {
                     modalConfig.confirmAction();
                     setModalVisible(false);
@@ -415,37 +370,29 @@ const ProfileScreen = () => {
 
 // --- STYLES ---
 const styles = StyleSheet.create({
-  header: { 
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 80,
-    paddingBottom: 20,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    paddingHorizontal: 30,
-  },
+  container: { flex: 1 },
+  header: { flexDirection: 'row', alignItems: 'center', paddingTop: 80, paddingBottom: 20, paddingHorizontal: 30, borderBottomWidth: 1 },
   backButton: { marginRight: 15 },
-  smallButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 10, backgroundColor: '#f5f5f5', marginVertical: 5, borderBottomWidth: 1, borderBottomColor: '#e5e5e5' },
-  smallButtonText: { fontSize: 14, fontWeight: '500', color: '#000' },
-  headerTitle: { fontSize: 20, fontWeight: '700', color: '#000' },
-  profileSection: { alignItems: 'center', padding: 20, backgroundColor: '#f5f5f5', margin: 10, borderRadius: 12 },
+  headerTitle: { fontSize: 20, fontWeight: '700' },
+  profileSection: { alignItems: 'center', padding: 20, margin: 10, borderRadius: 12 },
   imageContainer: { position: 'relative', marginBottom: 15 },
   profileImage: { width: 120, height: 120, borderRadius: 60, borderWidth: 2, borderColor: '#ddd', justifyContent: 'center', alignItems: 'center' },
-  placeholderContainer: { backgroundColor: '#ddd' },
+  placeholderContainer: { justifyContent: 'center', alignItems: 'center' },
   cameraButton: { position: 'absolute', right: 0, bottom: 0, backgroundColor: '#000', width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
-  userName: { fontSize: 20, fontWeight: '600', color: '#000' },
-  section: { backgroundColor: '#f5f5f5', padding: 20, margin: 10, borderRadius: 12 },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#000', marginBottom: 10 },
-  infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#e5e5e5' },
-  infoLabel: { fontSize: 14, fontWeight: '500', color: '#333' },
-  infoValue: { fontSize: 14, color: '#555' },
-  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#e5e5e5' },
-  switchLabel: { fontSize: 14, color: '#000', fontWeight: '500' },
+  userName: { fontSize: 20, fontWeight: '600' },
+  section: { padding: 20, margin: 10, borderRadius: 12 },
+  sectionTitle: { fontSize: 16, fontWeight: '600', marginBottom: 10 },
+  infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1 },
+  infoLabel: { fontSize: 14, fontWeight: '500' },
+  infoValue: { fontSize: 14 },
+  switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1 },
+  switchLabel: { fontSize: 14, fontWeight: '500' },
+  smallButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, paddingHorizontal: 15, borderRadius: 10, marginVertical: 5, borderBottomWidth: 1 },
+  smallButtonText: { fontSize: 14, fontWeight: '500' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalContainer: { width: '80%', backgroundColor: '#fff', padding: 20, borderRadius: 12, borderWidth: 2, borderColor: '#000' },
-  modalTitle: { fontSize: 18, fontWeight: '700', marginBottom: 10, color: '#000' },
-  modalMessage: { fontSize: 14, marginBottom: 20, color: '#333' },
+  modalContainer: { width: '80%', padding: 20, borderRadius: 12, borderWidth: 2 },
+  modalTitle: { fontSize: 18, fontWeight: '700', marginBottom: 10 },
+  modalMessage: { fontSize: 14, marginBottom: 20 },
   modalButtons: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10 },
   modalButton: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 10, alignItems: 'center' },
 });
