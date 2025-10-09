@@ -187,6 +187,7 @@ export default function AdminDashboard() {
             <View style={styles.dashboardGrid}>
               <TouchableOpacity
                 style={[styles.dashboardCard, darkMode && styles.darkDashboardCard]}
+                onPress={() => router.push("/total-users")}
               >
                 <Ionicons name="people" size={28} color="#4CAF50" style={styles.cardIcon} />
                 <Text style={[styles.cardTitle, darkMode && styles.darkCardText]}>Total Users</Text>
@@ -197,6 +198,7 @@ export default function AdminDashboard() {
 
               <TouchableOpacity
                 style={[styles.dashboardCard, darkMode && styles.darkDashboardCard]}
+                onPress={() => router.push("/previous-users")}
               >
                 <MaterialIcons name="history" size={28} color="#FF9800" style={styles.cardIcon} />
                 <Text style={[styles.cardTitle, darkMode && styles.darkCardText]}>
@@ -220,7 +222,7 @@ export default function AdminDashboard() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.dashboardCard, darkMode && styles.darkDashboardCard]}
+                style={[styles.dashboardCard, darkMode && styles.darkDashboardCard] }
               >
                 <Ionicons name="home" size={28} color="#9C27B0" style={styles.cardIcon} />
                 <Text style={[styles.cardTitle, darkMode && styles.darkCardText]}>Total Rooms</Text>
