@@ -27,7 +27,7 @@ export default function PreviousUsers() {
           headers: { Authorization: `Bearer ${savedToken}` },
         });
         console.log("Previous users API response:", response.data); // check API fields
-        setUsers(response.data);
+        setUsers(response.data.data || []);
       } catch (err: any) {
         console.error(err.response?.data || err.message);
       } finally {
@@ -62,7 +62,7 @@ export default function PreviousUsers() {
           renderItem={({ item, index }) => (
             <View style={[styles.userCard, darkMode && styles.darkUserCard]}>
               <Text style={[styles.userName, darkMode && styles.darkText]}>
-                {index + 1}. {item.name ?? item.full_name ?? "Unnamed User"}
+                {index + 1}. {item.name ?? item.full_name ?? item.fullName ?? "Unnamed User"}
               </Text>
               <Text style={[styles.userEmail, darkMode && styles.darkText]}>
                 {item.email ?? "No email"}
