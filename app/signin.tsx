@@ -1,150 +1,39 @@
 import { ThemedText } from '@/components/ThemedText';
 import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Location from 'expo-location';
 import { Stack, useRouter } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Alert,
   Animated,
   Dimensions,
   FlatList,
   Image,
-  Platform,
   StyleSheet,
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
-  Linking,
 } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE, Callout } from 'react-native-maps';
+import { WebView } from 'react-native-webview';
 
 const { width: screenWidth } = Dimensions.get('window');
 const DRAWER_WIDTH = screenWidth * 0.75;
 
-const SOUTH_CAMPUS_CENTER = {
-  latitude: -25.54053,
-  longitude: 28.09529,
-  latitudeDelta: 0.004,
-  longitudeDelta: 0.004,
+type LocationType = {
+  name: string;
 };
 
 export default function DashboardScreen() {
   const router = useRouter();
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredLocations, setFilteredLocations] = useState([]);
-  const [hasLocationPermission, setHasLocationPermission] = useState(false);
+  const [filteredLocations, setFilteredLocations] = useState<LocationType[]>([]);
   const [userName, setUserName] = useState('User');
   const [userProfileImage, setUserProfileImage] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerAnim] = useState(new Animated.Value(-DRAWER_WIDTH));
-  const [savedPlaces, setSavedPlaces] = useState<Array<{ name: string; latitude: number; longitude: number }>>([]);
-
-  const mapRef = useRef<MapView>(null);
-
-  const locations = [
-    { name: 'Main Gate', latitude: -25.54085, longitude: 28.0946 },
-    { name: 'Administration Building', latitude: -25.54043, longitude: 28.0959 },
-    { name: 'Library', latitude: -25.54072, longitude: 28.0963 },
-    { name: 'Engineering Faculty', latitude: -25.54112, longitude: 28.0965 },
-    { name: 'ICT Building', latitude: -25.54055, longitude: 28.0967 },
-    { name: 'Student Centre', latitude: -25.54034, longitude: 28.0954 },
-    { name: 'Ruth First Hall', latitude: -25.54063, longitude: 28.0957 },
-    { name: 'Lecture Halls Block A', latitude: -25.54025, longitude: 28.0962 },
-    { name: 'Lecture Halls Block B', latitude: -25.5401, longitude: 28.0966 },
-    { name: 'Parking Area', latitude: -25.54125, longitude: 28.0949 },
-    { name: 'Cafeteria', latitude: -25.54078, longitude: 28.0952 },
-    { name: 'Security Office', latitude: -25.54093, longitude: 28.0947 },
-  ];
-
-  useEffect(() => {
-    (async () => {
-      const name = await AsyncStorage.getItem('userName');
-      if (name) setUserName(name);
-
-      const uri = await AsyncStorage.getItem('profileImage');
-      if (uri) setUserProfileImage(uri);
-
-      const saved = await AsyncStorage.getItem('savedPlaces');
-      if (saved) setSavedPlaces(JSON.parse(saved));
-    })();
-  }, []);
-
-  const requestLocation = async () => {
-    if (Platform.OS !== 'web') {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission denied', 'Location access is required to show your position.');
-        return;
-      }
-      setHasLocationPermission(true);
-      const location = await Location.getCurrentPositionAsync({});
-      mapRef.current?.animateCamera({
-        center: { latitude: location.coords.latitude, longitude: location.coords.longitude },
-        pitch: 45,
-        heading: 0,
-        altitude: 300,
-        zoom: 18,
-      });
-    }
-  };
-
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    if (query.trim() === '') {
-      setFilteredLocations([]);
-    } else {
-      const filtered = locations.filter((loc) =>
-        loc.name.toLowerCase().includes(query.toLowerCase())
-      );
-      setFilteredLocations(filtered);
-    }
-  };
-
-  const selectLocation = (loc: typeof locations[0]) => {
-    setSearchQuery(loc.name);
-    setFilteredLocations([]);
-    mapRef.current?.animateCamera({
-      center: { latitude: loc.latitude, longitude: loc.longitude },
-      pitch: 45,
-      heading: 0,
-      altitude: 300,
-      zoom: 18,
-    });
-  };
-
-  const openGoogleMapsNavigation = (lat: number, lon: number) => {
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&travelmode=walking`;
-    Linking.openURL(url);
-  };
-
-  const zoomIn = () => {
-    mapRef.current?.getCamera().then(camera => {
-      camera.zoom += 1;
-      mapRef.current?.animateCamera(camera, { duration: 400 });
-    });
-  };
-
-  const zoomOut = () => {
-    mapRef.current?.getCamera().then(camera => {
-      camera.zoom -= 1;
-      mapRef.current?.animateCamera(camera, { duration: 400 });
-    });
-  };
-
-  const fitAllMarkers = () => {
-    if (mapRef.current) {
-      const coordinates = locations.map((loc) => ({
-        latitude: loc.latitude,
-        longitude: loc.longitude,
-      }));
-      mapRef.current.fitToCoordinates(coordinates, {
-        edgePadding: { top: 80, right: 80, bottom: 80, left: 80 },
-        animated: true,
-      });
-    }
-  };
+  const [savedPlaces, setSavedPlaces] = useState<LocationType[]>([]);
+  const [webViewUrl, setWebViewUrl] = useState<string>('http://168.172.187.190:8080'); // default web app
 
   const toggleDrawer = () => {
     if (drawerOpen) {
@@ -163,55 +52,32 @@ export default function DashboardScreen() {
     }
   };
 
+  useEffect(() => {
+    (async () => {
+      const name = await AsyncStorage.getItem('userName');
+      if (name) setUserName(name);
+
+      const uri = await AsyncStorage.getItem('profileImage');
+      if (uri) setUserProfileImage(uri);
+
+      const saved = await AsyncStorage.getItem('savedPlaces');
+      if (saved) setSavedPlaces(JSON.parse(saved));
+    })();
+  }, []);
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={{ flex: 1 }}>
-        {/* Map */}
-        <MapView
-          ref={mapRef}
-          provider={PROVIDER_GOOGLE}
-          style={StyleSheet.absoluteFillObject}
-          initialRegion={SOUTH_CAMPUS_CENTER}
-          mapType="hybrid"
-          pitchEnabled
-          rotateEnabled
-          zoomEnabled
-          scrollEnabled
-          showsUserLocation={hasLocationPermission}
-          showsMyLocationButton
-          onMapReady={() => {
-            fitAllMarkers();
-            mapRef.current?.animateCamera({
-              center: SOUTH_CAMPUS_CENTER,
-              pitch: 45,
-              heading: 0,
-              altitude: 300,
-              zoom: 18,
-            });
-          }}
-        >
-          {locations.map((loc) => (
-            <Marker
-              key={loc.name}
-              coordinate={{ latitude: loc.latitude, longitude: loc.longitude }}
-              title={loc.name}
-              pinColor="#007AFF"
-            >
-              <Callout onPress={() => openGoogleMapsNavigation(loc.latitude, loc.longitude)}>
-                <View>
-                  <ThemedText style={{ fontWeight: 'bold', fontSize: 14 }}>{loc.name}</ThemedText>
-                  <ThemedText style={{ color: '#007AFF' }}>Tap to Navigate 🚶‍♂️</ThemedText>
-                </View>
-              </Callout>
-            </Marker>
-          ))}
-        </MapView>
+        {/* WebView */}
+        <WebView source={{ uri: webViewUrl }} style={{ flex: 1 }} />
 
         {/* Drawer Overlay */}
-        {drawerOpen && <TouchableWithoutFeedback onPress={toggleDrawer}>
-          <View style={styles.drawerOverlay} />
-        </TouchableWithoutFeedback>}
+        {drawerOpen && (
+          <TouchableWithoutFeedback onPress={toggleDrawer}>
+            <View style={styles.drawerOverlay} />
+          </TouchableWithoutFeedback>
+        )}
 
         {/* Drawer */}
         <Animated.View style={[styles.drawer, { transform: [{ translateX: drawerAnim }] }]}>
@@ -222,7 +88,12 @@ export default function DashboardScreen() {
             {userProfileImage ? (
               <Image source={{ uri: userProfileImage }} style={styles.drawerProfileImage} />
             ) : (
-              <View style={[styles.drawerProfileImage, { backgroundColor: '#ddd', justifyContent: 'center', alignItems: 'center' }]}>
+              <View
+                style={[
+                  styles.drawerProfileImage,
+                  { backgroundColor: '#ddd', justifyContent: 'center', alignItems: 'center' },
+                ]}
+              >
                 <Feather name="user" size={40} color="#888" />
               </View>
             )}
@@ -244,19 +115,7 @@ export default function DashboardScreen() {
             data={savedPlaces}
             keyExtractor={(item) => item.name}
             renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.drawerItem}
-                onPress={() => {
-                  mapRef.current?.animateCamera({
-                    center: { latitude: item.latitude, longitude: item.longitude },
-                    pitch: 45,
-                    heading: 0,
-                    altitude: 300,
-                    zoom: 18,
-                  });
-                  toggleDrawer();
-                }}
-              >
+              <TouchableOpacity style={styles.drawerItem}>
                 <Feather name="map-pin" size={20} color="#000" style={{ marginRight: 10 }} />
                 <ThemedText>{item.name}</ThemedText>
               </TouchableOpacity>
@@ -268,45 +127,25 @@ export default function DashboardScreen() {
         <View style={styles.searchContainer}>
           <TextInput
             style={styles.searchInput}
-            placeholder="Search for a building..."
+            placeholder="Search..."
             placeholderTextColor="#555"
             value={searchQuery}
-            onChangeText={handleSearch}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+            onSubmitEditing={() => {
+              if (!searchQuery.trim()) return;
+              const webUrl = `http://168.172.187.190:8080/search?query=${encodeURIComponent(searchQuery)}`;
+              setWebViewUrl(webUrl); // open search inside WebView
+            }}
           />
-          {filteredLocations.length > 0 && (
-            <View style={styles.dropdown}>
-              <FlatList
-                data={filteredLocations}
-                keyExtractor={(item) => item.name}
-                renderItem={({ item }) => (
-                  <TouchableOpacity style={styles.dropdownItem} onPress={() => selectLocation(item)}>
-                    <ThemedText>{item.name}</ThemedText>
-                  </TouchableOpacity>
-                )}
-              />
-            </View>
-          )}
         </View>
 
-        {/* Zoom & Location Controls */}
-        <View style={styles.zoomControls}>
-          <TouchableOpacity style={styles.zoomButton} onPress={zoomIn}>
-            <Feather name="plus" size={22} color="#000" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.zoomButton} onPress={zoomOut}>
-            <Feather name="minus" size={22} color="#000" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.zoomButton} onPress={requestLocation}>
-            <Feather name="crosshair" size={22} color="#000" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Footer */}
+        {/* Footer Tabs */}
         <View style={styles.footer}>
-          <TouchableOpacity style={[styles.tab, styles.activeTab]} onPress={() => router.push('/dashboard')}>
+          <TouchableOpacity style={[styles.tab, styles.activeTab]} onPress={() => setWebViewUrl('http://168.172.187.190:8080')}>
             <View style={styles.tabContent}>
-              <Feather name="map-pin" size={24} color="#9fc3c3" />
-              <ThemedText style={[styles.tabText, styles.activeTabText]}>Map</ThemedText>
+              <Feather name="home" size={24} color="#9fc3c3" />
+              <ThemedText style={[styles.tabText, styles.activeTabText]}>Home</ThemedText>
             </View>
           </TouchableOpacity>
           <TouchableOpacity style={styles.tab} onPress={() => router.push('/Report')}>
@@ -323,7 +162,7 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Hamburger Menu */}
+        {/* Hamburger Menu Button */}
         <TouchableOpacity style={styles.menuButton} onPress={toggleDrawer}>
           <Feather name="menu" size={28} color="black" />
         </TouchableOpacity>
@@ -356,31 +195,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 4,
-  },
-  dropdown: {
-    marginTop: 5,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    maxHeight: 200,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 4,
-  },
-  dropdownItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  zoomControls: { position: 'absolute', right: 15, bottom: 120, flexDirection: 'column' },
-  zoomButton: {
-    backgroundColor: '#fff',
-    borderRadius: 30,
-    padding: 10,
-    marginVertical: 5,
-    elevation: 4,
-    alignItems: 'center',
   },
   footer: {
     position: 'absolute',
