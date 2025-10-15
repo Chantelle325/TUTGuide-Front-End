@@ -3,16 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ActivityIndicator, Alert, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View, } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import API from "./api";
 
@@ -211,10 +202,10 @@ export default function AdminDashboard() {
 
               <TouchableOpacity
                 style={[styles.dashboardCard, darkMode && styles.darkDashboardCard]}
+                onPress={() => router.push("/total-buildings")}
               >
                 <FontAwesome5 name="building" size={28} color="#2196F3" style={styles.cardIcon} />
-                <Text style={[styles.cardTitle, darkMode && styles.darkCardText]}>
-                  Total Buildings
+                <Text style={[styles.cardTitle, darkMode && styles.darkCardText]}>Total Buildings
                 </Text>
                 <Text style={[styles.cardValue, darkMode && styles.darkCardText]}>
                   {totalBuildings}
@@ -223,9 +214,10 @@ export default function AdminDashboard() {
 
               <TouchableOpacity
                 style={[styles.dashboardCard, darkMode && styles.darkDashboardCard] }
+                onPress={() => router.push("/total-facilities")}
               >
                 <Ionicons name="home" size={28} color="#9C27B0" style={styles.cardIcon} />
-                <Text style={[styles.cardTitle, darkMode && styles.darkCardText]}>Total Rooms</Text>
+                <Text style={[styles.cardTitle, darkMode && styles.darkCardText]}>Total Facilities</Text>
                 <Text style={[styles.cardValue, darkMode && styles.darkCardText]}>
                   {totalRooms}
                 </Text>
@@ -346,6 +338,16 @@ export default function AdminDashboard() {
                   Configure system settings and preferences
                 </Text>
               </TouchableOpacity>
+
+              <TouchableOpacity
+        style={styles.settingsCard}
+        onPress={() => router.push("/manage-buildings")}
+      >
+        <Text style={styles.settingsCardTitle}>Manage Buildings</Text>
+        <Text style={styles.settingsCardDesc}>
+          Edit building numbers, names, and other details to keep records up to date
+        </Text>
+      </TouchableOpacity>
             </View>
           </View>
         )}
@@ -396,120 +398,40 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#eee" },
   darkContainer: { backgroundColor: "#121212" },
   darkText: { color: "#fff" },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 50,
-    paddingBottom: 16,
-    backgroundColor: "#bbb",
-  },
+  header: {flexDirection: "row",justifyContent: "space-between",alignItems: "center",paddingHorizontal: 16,paddingTop: 50,paddingBottom: 16,backgroundColor: "#bbb",},
   darkHeader: { backgroundColor: "#222" },
   headerLeft: { flexDirection: "row", alignItems: "center" },
-  logoContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
+  logoContainer: {width: 48,height: 48,borderRadius: 12,backgroundColor: "#fff",justifyContent: "center",alignItems: "center",marginRight: 12,},
   headerTitle: { fontSize: 20, fontWeight: "bold", color: "#000" },
   headerSubtitle: { fontSize: 13, color: "#000", marginTop: 2 },
-  logoutButton: {
-    padding: 10,
-    borderRadius: 50,
-    backgroundColor: "#fff",
-  },
+  logoutButton: {padding: 10,borderRadius: 50,backgroundColor: "#fff",},
   content: { flex: 1, padding: 16 },
   tabContent: { gap: 16 },
   tabTitle: { fontSize: 22, fontWeight: "bold", color: "#333", marginBottom: 12 },
   footer: { borderTopWidth: 1, borderTopColor: "#ccc", backgroundColor: "#ddd" },
   darkFooter: { backgroundColor: "#222", borderTopColor: "#444" },
   tabContainer: { flexDirection: "row" },
-  tab: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 12,
-    position: "relative",
-  },
+  tab: {flex: 1,alignItems: "center",justifyContent: "center",paddingVertical: 12,position: "relative",},
   activeTab: { borderTopWidth: 3, borderTopColor: "#000", backgroundColor: "#aaa" },
   tabText: { color: "#333", fontSize: 14, marginTop: 4 },
   activeTabText: { color: "#000", fontWeight: "bold" },
-  badge: {
-    position: "absolute",
-    top: 6,
-    right: 28,
-    backgroundColor: "red",
-    borderRadius: 10,
-    minWidth: 18,
-    height: 18,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 4,
-  },
+  badge: {position: "absolute",top: 6,right: 28,backgroundColor: "red",borderRadius: 10,minWidth: 18,height: 18,justifyContent: "center",alignItems: "center",paddingHorizontal: 4,},
   badgeText: { color: "#fff", fontSize: 11, fontWeight: "bold" },
   dashboardGrid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
-  dashboardCard: {
-    backgroundColor: "#fff",
-    width: "45%",
-    borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 3,
-    marginBottom: 20,
-  },
-  darkDashboardCard: {
-    backgroundColor: "#1e1e1e",
-    borderColor: "#333",
-    borderWidth: 1,
-  },
+  dashboardCard: {backgroundColor: "#fff",width: "45%",borderRadius: 12,padding: 16,alignItems: "center",justifyContent: "center",shadowColor: "#000",shadowOpacity: 0.1,
+  shadowOffset: { width: 0, height: 2 },shadowRadius: 4,elevation: 3,marginBottom: 20,},
+  darkDashboardCard: {backgroundColor: "#1e1e1e",borderColor: "#333",borderWidth: 1,},
   cardTitle: { fontSize: 16, fontWeight: "600", marginBottom: 8 },
   cardValue: { fontSize: 22, fontWeight: "bold", color: "#333" },
   darkCardText: { color: "#fff" },
-  settingsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginTop: 20,
-  },
-  settingsCard: {
-    backgroundColor: "#f9f9f9",
-    padding: 16,
-    borderRadius: 10,
-    marginBottom: 15,
-    width: "48%",
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
+  settingsGrid: {flexDirection: "row",flexWrap: "wrap",justifyContent: "space-between",marginTop: 20,},
+  settingsCard: {backgroundColor: "#f9f9f9",padding: 16,borderRadius: 10,marginBottom: 15,width: "48%",shadowColor: "#000",shadowOpacity: 0.1,shadowRadius: 4,elevation: 2,},
   settingsCardTitle: { fontSize: 16, fontWeight: "bold", color: "#000", marginBottom: 6 },
   settingsCardDesc: { fontSize: 12, color: "#555" },
-  locationCard: {
-    backgroundColor: "#fff",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 10,
-  },
+  locationCard: {backgroundColor: "#fff",borderRadius: 14,padding: 16,marginBottom: 10,},
   locationHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   locationName: { fontSize: 16, fontWeight: "600", color: "#333" },
   viewedFeedbackText: { color: "#999", fontStyle: "italic" },
-  viewButton: {
-    backgroundColor: "#aaa",
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-  },
-  viewedButton: { backgroundColor: "#ddd" },
-  viewButtonText: { color: "#fff", fontWeight: "800" },
-  cardIcon: { marginBottom: 10 },
+  viewButton: {backgroundColor: "#aaa",paddingVertical: 6,paddingHorizontal: 12,borderRadius: 8,},
+  viewedButton: { backgroundColor: "#ddd" },viewButtonText: { color: "#fff", fontWeight: "800" },cardIcon: { marginBottom: 10 },
 });
