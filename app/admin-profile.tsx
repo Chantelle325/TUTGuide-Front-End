@@ -6,16 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Speech from 'expo-speech';
 import React, { useEffect, useState } from 'react';
-import {
-  Image,
-  Modal,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Image, Modal, Platform, ScrollView, StyleSheet, Switch, TouchableOpacity, View, } from 'react-native';
 import API from './api'; // centralized Axios instance with JWT
 
 const ProfileScreen = () => {
