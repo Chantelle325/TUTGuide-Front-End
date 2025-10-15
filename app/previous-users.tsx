@@ -28,7 +28,6 @@ export default function PreviousUsers() {
         });
         console.log("Previous users API response:", response.data); // check API fields
         setUsers(response.data.data || []);
-        setUsers(response.data.data || []);
       } catch (err: any) {
         console.error(err.response?.data || err.message);
       } finally {
