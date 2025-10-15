@@ -30,7 +30,8 @@ const ProfileScreen = () => {
   });
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [darkModeEnabled, setdarkModeEnabled] = useState(false);
   const [clickSound, setClickSound] = useState<Audio.Sound | null>(null);
 
   // --- MODAL STATE ---
@@ -200,7 +201,7 @@ const ProfileScreen = () => {
     showModal({
       title: 'Logging Out',
       message:
-        'Are you sure you want to log out? You will need to log in again to access your profile.',
+        'Are you sure you want to log out? ',
       confirmText: 'Log Out',
       cancelText: 'Cancel',
       type: 'danger',
@@ -289,12 +290,7 @@ const ProfileScreen = () => {
             {/* Email */}
             <TouchableOpacity
               style={styles.infoRow}
-              onPress={() =>
-                router.push({
-                  pathname: '/edit-profile',
-                  params: { name: userData.name, email: userData.email },
-                })
-              }
+              
             >
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Ionicons name="mail-outline" size={20} color="#000" style={{ marginRight: 10 }} />
@@ -302,7 +298,7 @@ const ProfileScreen = () => {
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <ThemedText style={styles.infoValue}>{userData.email}</ThemedText>
-                <Ionicons name="chevron-forward" size={20} color="#888" style={{ marginLeft: 5 }} />
+                
               </View>
             </TouchableOpacity>
 
@@ -347,7 +343,17 @@ const ProfileScreen = () => {
                 trackColor={{ true: '#ccc', false: '#ccc' }}
               />
             </View>
+            <View style={styles.switchRow}>
+              <ThemedText style={styles.switchLabel}>Dark Mode</ThemedText>
+              <Switch
+                value={darkModeEnabled}
+                onValueChange={(val) => setdarkModeEnabled(val)}
+                thumbColor="black"
+                trackColor={{ true: '#ccc', false: '#ccc' }}
+              />
+            </View>
           </View>
+
 
           {/* ABOUT & ACTIONS */}
           <View style={styles.section}>
