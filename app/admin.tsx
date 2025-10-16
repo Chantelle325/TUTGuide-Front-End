@@ -348,6 +348,16 @@ export default function AdminDashboard() {
           Edit building numbers, names, and other details to keep records up to date
         </Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.settingsCard}
+        onPress={() => router.push("/manage-facilities")}
+      >
+        <Text style={styles.settingsCardTitle}>Manage Facilities</Text>
+        <Text style={styles.settingsCardDesc}>
+          Add, update, or remove facility details such as rooms, labs, and halls
+        </Text>
+      </TouchableOpacity>
             </View>
           </View>
         )}

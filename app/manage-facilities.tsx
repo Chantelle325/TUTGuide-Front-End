@@ -12,88 +12,91 @@ import {
 } from "react-native";
 import { useTheme } from "./ThemeContext";
 
-interface Building {
+interface Facility {
   id: string;
   name: string;
-  number: string;
+  description: string;
 }
 
-const ManageBuildings = () => {
+const ManageFacilities = () => {
   const { darkMode } = useTheme();
-  const [buildings, setBuildings] = useState<Building[]>([]);
-  const [filteredBuildings, setFilteredBuildings] = useState<Building[]>([]);
+  const [facilities, setFacilities] = useState<Facility[]>([]);
+  const [filteredFacilities, setFilteredFacilities] = useState<Facility[]>([]);
   const [searchText, setSearchText] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
-  const [editingBuilding, setEditingBuilding] = useState<Building | null>(null);
-  const [formData, setFormData] = useState({ name: "", number: "" });
+  const [editingFacility, setEditingFacility] = useState<Facility | null>(null);
+  const [formData, setFormData] = useState({ name: "", description: "" });
 
+  // Dummy Data
   useEffect(() => {
     const dummy = [
-      { id: "1", name: "Administration Block", number: "B01" },
-      { id: "2", name: "Engineering Hall", number: "B12" },
-      { id: "3", name: "Library Complex", number: "B08" },
-      { id: "4", name: "Science Wing", number: "B15" },
+      { id: "1", name: "Computer Lab", description: "Technology" },
+      { id: "2", name: "Auditorium", description: "Events" },
+      { id: "3", name: "Sports Hall", description: "Fitness" },
+      { id: "4", name: "Cafeteria", description: "Food" },
+      { id: "5", name: "Library", description: "Study" },
+      { id: "6", name: "Admin Block", description: "Offices" },
     ];
-    setBuildings(dummy);
-    setFilteredBuildings(dummy);
+    setFacilities(dummy);
+    setFilteredFacilities(dummy);
   }, []);
 
   // 🔍 Search Filter
   useEffect(() => {
-    const filtered = buildings.filter(
-      (b) =>
-        b.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        b.number.toLowerCase().includes(searchText.toLowerCase())
+    const filtered = facilities.filter(
+      (f) =>
+        f.name.toLowerCase().includes(searchText.toLowerCase()) ||
+        f.description.toLowerCase().includes(searchText.toLowerCase())
     );
-    setFilteredBuildings(filtered);
-  }, [searchText, buildings]);
+    setFilteredFacilities(filtered);
+  }, [searchText, facilities]);
 
   const openAddModal = () => {
-    setEditingBuilding(null);
-    setFormData({ name: "", number: "" });
+    setEditingFacility(null);
+    setFormData({ name: "", description: "" });
     setModalVisible(true);
   };
 
-  const openEditModal = (building: Building) => {
-    setEditingBuilding(building);
+  const openEditModal = (facility: Facility) => {
+    setEditingFacility(facility);
     setFormData({
-      name: building.name,
-      number: building.number,
+      name: facility.name,
+      description: facility.description,
     });
     setModalVisible(true);
   };
 
   const handleSave = () => {
-    if (!formData.name || !formData.number) {
-      Alert.alert("Validation", "Building name and number are required.");
+    if (!formData.name || !formData.description) {
+      Alert.alert("Validation", "Facility name and description are required.");
       return;
     }
 
-    if (editingBuilding) {
-      setBuildings((prev) =>
-        prev.map((b) =>
-          b.id === editingBuilding.id ? { ...b, ...formData } : b
+    if (editingFacility) {
+      setFacilities((prev) =>
+        prev.map((f) =>
+          f.id === editingFacility.id ? { ...f, ...formData } : f
         )
       );
     } else {
-      const newBuilding = {
+      const newFacility = {
         id: Date.now().toString(),
         ...formData,
       };
-      setBuildings((prev) => [...prev, newBuilding]);
+      setFacilities((prev) => [...prev, newFacility]);
     }
 
     setModalVisible(false);
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert("Confirm Delete", "Delete this building?", [
+    Alert.alert("Confirm Delete", "Delete this facility?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
         style: "destructive",
         onPress: () => {
-          setBuildings((prev) => prev.filter((b) => b.id !== id));
+          setFacilities((prev) => prev.filter((f) => f.id !== id));
         },
       },
     ]);
@@ -102,9 +105,15 @@ const ManageBuildings = () => {
   return (
     <View style={[styles.container, darkMode && styles.containerDark]}>
       <View style={styles.header}>
-        <Text style={[styles.title, darkMode && styles.textLight]}>Manage Buildings</Text>
+        <Text style={[styles.title, darkMode && styles.textLight]}>
+          Manage Facilities
+        </Text>
         <TouchableOpacity onPress={openAddModal}>
-          <Ionicons name="add-circle-outline" size={30} color={darkMode ? "#fff" : "#000"} />
+          <Ionicons
+            name="add-circle-outline"
+            size={30}
+            color={darkMode ? "#fff" : "#000"}
+          />
         </TouchableOpacity>
       </View>
 
@@ -112,7 +121,7 @@ const ManageBuildings = () => {
       <View style={[styles.searchBar, darkMode && styles.searchBarDark]}>
         <Ionicons name="search-outline" size={20} color={darkMode ? "#aaa" : "#555"} />
         <TextInput
-          placeholder="Search by building name or number..."
+          placeholder="Search by facility name or description..."
           placeholderTextColor={darkMode ? "#888" : "#777"}
           style={[styles.searchInput, darkMode && styles.searchInputDark]}
           value={searchText}
@@ -126,20 +135,22 @@ const ManageBuildings = () => {
           {/* Header Row */}
           <View style={[styles.tableRow, styles.tableHeader]}>
             <Text style={[styles.cellHeader, { width: 60 }]}>#</Text>
-            <Text style={[styles.cellHeader, { width: 250 }]}>Building Name</Text>
-            <Text style={[styles.cellHeader, { width: 150 }]}>Number</Text>
+            <Text style={[styles.cellHeader, { width: 250 }]}>Facility Name</Text>
+            <Text style={[styles.cellHeader, { width: 180 }]}>Description</Text>
             <Text style={[styles.cellHeader, { width: 150 }]}>Actions</Text>
           </View>
 
           {/* Data Rows */}
-          {filteredBuildings.length === 0 ? (
+          {filteredFacilities.length === 0 ? (
             <View style={styles.emptyRow}>
-              <Text style={[styles.text, darkMode && styles.textLight]}>No buildings found.</Text>
+              <Text style={[styles.text, darkMode && styles.textLight]}>
+                No facilities found.
+              </Text>
             </View>
           ) : (
-            filteredBuildings.map((b, index) => (
+            filteredFacilities.map((f, index) => (
               <View
-                key={b.id}
+                key={f.id}
                 style={[
                   styles.tableRow,
                   index % 2 === 0 ? styles.rowEven : styles.rowOdd,
@@ -150,10 +161,10 @@ const ManageBuildings = () => {
                   {index + 1}
                 </Text>
                 <Text style={[styles.cell, { width: 250 }, darkMode && styles.textLight]}>
-                  {b.name}
+                  {f.name}
                 </Text>
-                <Text style={[styles.cell, { width: 150 }, darkMode && styles.textLight]}>
-                  {b.number}
+                <Text style={[styles.cell, { width: 180 }, darkMode && styles.textLight]}>
+                  {f.description}
                 </Text>
                 <View
                   style={[
@@ -161,10 +172,10 @@ const ManageBuildings = () => {
                     { width: 150, flexDirection: "row", justifyContent: "center" },
                   ]}
                 >
-                  <TouchableOpacity onPress={() => openEditModal(b)} style={styles.actionBtn}>
+                  <TouchableOpacity onPress={() => openEditModal(f)} style={styles.actionBtn}>
                     <Ionicons name="create-outline" size={20} color="#2196F3" />
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleDelete(b.id)} style={styles.actionBtn}>
+                  <TouchableOpacity onPress={() => handleDelete(f.id)} style={styles.actionBtn}>
                     <Ionicons name="trash-outline" size={20} color="red" />
                   </TouchableOpacity>
                 </View>
@@ -179,36 +190,36 @@ const ManageBuildings = () => {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalBox, darkMode && styles.modalBoxDark]}>
             <Text style={[styles.modalTitle, darkMode && styles.textLight]}>
-              {editingBuilding ? "Edit Building" : "Add Building"}
+              {editingFacility ? "Edit Facility" : "Add Facility"}
             </Text>
 
             <TextInput
-              placeholder="Building Name"
+              placeholder="Facility Name"
               placeholderTextColor={darkMode ? "#aaa" : "#666"}
               style={[styles.input, darkMode && styles.inputDark]}
               value={formData.name}
               onChangeText={(text) => setFormData({ ...formData, name: text })}
             />
             <TextInput
-              placeholder="Building Number"
+              placeholder="Short Description (e.g. Food, Fitness)"
               placeholderTextColor={darkMode ? "#aaa" : "#666"}
               style={[styles.input, darkMode && styles.inputDark]}
-              value={formData.number}
-              onChangeText={(text) => setFormData({ ...formData, number: text })}
+              value={formData.description}
+              onChangeText={(text) => setFormData({ ...formData, description: text })}
             />
-            <TextInput
+             <TextInput
               placeholder="Latitude"
               placeholderTextColor={darkMode ? "#aaa" : "#666"}
               style={[styles.input, darkMode && styles.inputDark]}
-              value={formData.number}
-              onChangeText={(text) => setFormData({ ...formData, number: text })}
+              value={formData.description}
+              onChangeText={(text) => setFormData({ ...formData, description: text })}
             />
-            <TextInput
+             <TextInput
               placeholder="Longitude"
               placeholderTextColor={darkMode ? "#aaa" : "#666"}
               style={[styles.input, darkMode && styles.inputDark]}
-              value={formData.number}
-              onChangeText={(text) => setFormData({ ...formData, number: text })}
+              value={formData.description}
+              onChangeText={(text) => setFormData({ ...formData, description: text })}
             />
 
             <View style={styles.modalButtons}>
@@ -326,4 +337,4 @@ const styles = StyleSheet.create({
   modalBtn: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
 });
 
-export default ManageBuildings;
+export default ManageFacilities;

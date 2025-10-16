@@ -40,11 +40,9 @@ export default function SignUpScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  // Password strength state
   const [passwordStrength, setPasswordStrength] = useState<'Weak' | 'Medium' | 'Strong' | ''>('');
 
-  // Check password strength function
+  // Password strength check
   const checkPasswordStrength = (pass: string) => {
     if (!pass) return '';
     const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
@@ -63,7 +61,15 @@ export default function SignUpScreen() {
 
     const strength = checkPasswordStrength(password.trim());
     if (strength !== 'Strong')
-      return Alert.alert('Weak Password', 'Password must be at least 8 characters long, include uppercase, lowercase, number, and special character.');
+      return Alert.alert(
+        'Weak Password',
+        'Password must be at least 8 characters long, include uppercase, lowercase, number, and special character.'
+      );
+
+    // ❌ Restrict admin registration
+    if (role === 'admin') {
+      return Alert.alert('Not Authorized', 'You are not authorised to register as an admin.');
+    }
 
     try {
       setLoading(true);
@@ -79,18 +85,28 @@ export default function SignUpScreen() {
         await AsyncStorage.setItem('userToken', response.data.token);
       }
 
-      Alert.alert("Success", response.data.message || "Account created!");
+      Alert.alert('Success', response.data.message || 'Account created!');
       router.push({
         pathname: '/verify-code',
-        params: { 
-          fullName: encodeURIComponent(fullName), 
-          email: encodeURIComponent(email), 
-          role 
+        params: {
+          fullName: encodeURIComponent(fullName),
+          email: encodeURIComponent(email),
+          role,
         },
       });
     } catch (err: any) {
-      console.log("Registration error:", err.response?.data || err.message);
-      Alert.alert("Error", err.response?.data?.message || "Registration failed");
+      console.log('Registration error:', err.response?.data || err.message);
+
+      // ✅ Detect duplicate email and other specific cases
+      const errorMessage = err.response?.data?.message?.toLowerCase();
+
+      if (errorMessage?.includes('exists') || errorMessage?.includes('already')) {
+        Alert.alert('User Already Exists', 'This email is already registered. Please log in.');
+      } else if (errorMessage?.includes('admin')) {
+        Alert.alert('Not Authorized', 'You are not authorised to register as an admin.');
+      } else {
+        Alert.alert('Error', 'Registration failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -109,7 +125,7 @@ export default function SignUpScreen() {
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             <View style={styles.logoCircle}>
-              <Image 
+              <Image
                 source={require('@/assets/images/tutguide1.png')}
                 style={styles.logoImage}
                 resizeMode="contain"
@@ -119,7 +135,7 @@ export default function SignUpScreen() {
           </View>
         </View>
 
-        {/* CONTENT AREA */}
+        {/* CONTENT */}
         <View style={styles.contentContainer}>
           <ScrollView
             keyboardShouldPersistTaps="handled"
@@ -193,19 +209,22 @@ export default function SignUpScreen() {
                   secureTextEntry={!showPassword}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                  <Ionicons
-                    name={showPassword ? "eye" : "eye-off"}
-                    size={22}
-                    color="#555"
-                  />
+                  <Ionicons name={showPassword ? 'eye' : 'eye-off'} size={22} color="#555" />
                 </TouchableOpacity>
               </View>
               {password ? (
-                <Text style={{
-                  color: passwordStrength === 'Weak' ? 'red' : passwordStrength === 'Medium' ? 'orange' : 'green',
-                  marginTop: 4,
-                  fontWeight: '600'
-                }}>
+                <Text
+                  style={{
+                    color:
+                      passwordStrength === 'Weak'
+                        ? 'red'
+                        : passwordStrength === 'Medium'
+                        ? 'orange'
+                        : 'green',
+                    marginTop: 4,
+                    fontWeight: '600',
+                  }}
+                >
                   Password Strength: {passwordStrength}
                 </Text>
               ) : null}
@@ -224,11 +243,7 @@ export default function SignUpScreen() {
                   secureTextEntry={!showConfirmPassword}
                 />
                 <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                  <Ionicons
-                    name={showConfirmPassword ? "eye" : "eye-off"}
-                    size={22}
-                    color="#555"
-                  />
+                  <Ionicons name={showConfirmPassword ? 'eye' : 'eye-off'} size={22} color="#555" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -252,15 +267,11 @@ export default function SignUpScreen() {
             <View style={styles.bottomTextContainer}>
               <Text style={styles.bottomText}>
                 Already have an account?{' '}
-                <Text 
-                  style={styles.signInText} 
-                  onPress={() => router.push('/')}
-                >
+                <Text style={styles.signInText} onPress={() => router.push('/')}>
                   Sign In
                 </Text>
               </Text>
             </View>
-
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
@@ -284,7 +295,15 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
   },
   logoContainer: { flexDirection: 'row', alignItems: 'center' },
-  logoCircle: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#fff', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  logoCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
   logoImage: { width: 40, height: 40 },
   logoTextMain: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
   contentContainer: {
@@ -293,26 +312,41 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 50,
     overflow: 'hidden',
   },
-  title: { fontSize: 18, color: '#000', textAlign: 'center', marginBottom: 30, fontWeight: '500', marginTop: 30 ,fontFamily:'Montserrat'},
+  title: {
+    fontSize: 18,
+    color: '#000',
+    textAlign: 'center',
+    marginBottom: 30,
+    fontWeight: '500',
+    marginTop: 30,
+    fontFamily: 'Montserrat',
+  },
   inputBlock: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: '#ddd',
   },
   inputLabel: { fontSize: 16, marginBottom: 8, color: '#000' },
-  inputField: { 
-    flex: 1, 
-    fontSize: 16, 
-    color: "#000", 
+  inputField: {
+    flex: 1,
+    fontSize: 16,
+    color: '#000',
     paddingVertical: 8,
   },
-  inputRow: { flexDirection: "row", alignItems: "center" },
+  inputRow: { flexDirection: 'row', alignItems: 'center' },
   picker: { color: '#000', height: Platform.OS === 'ios' ? 150 : 50 },
-  button: { backgroundColor: '#000', padding: 15, borderRadius: 8, alignItems: 'center', marginTop: 10, marginBottom: 20 },
+  button: {
+    backgroundColor: '#000',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 20,
+  },
   buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 18 },
   bottomTextContainer: {
     alignItems: 'center',

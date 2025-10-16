@@ -45,7 +45,7 @@ export default function LoginScreen() {
       await AsyncStorage.setItem('userRole', user.role);
       await AsyncStorage.setItem('userName', user.fullName || user.email.split('@')[0]);
 
-      Alert.alert('Success', message || 'Logged in successfully');
+      
 
       if (user.role === 'admin') {
         router.replace('/admin');

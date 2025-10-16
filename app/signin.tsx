@@ -9,10 +9,9 @@ import {
   FlatList,
   Image,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  View,
+  View
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 
@@ -123,23 +122,6 @@ export default function DashboardScreen() {
           />
         </Animated.View>
 
-        {/* Search */}
-        <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search..."
-            placeholderTextColor="#555"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            returnKeyType="search"
-            onSubmitEditing={() => {
-              if (!searchQuery.trim()) return;
-              const webUrl = `http://168.172.187.190:8080/search?query=${encodeURIComponent(searchQuery)}`;
-              setWebViewUrl(webUrl); // open search inside WebView
-            }}
-          />
-        </View>
-
         {/* Footer Tabs */}
         <View style={styles.footer}>
           <TouchableOpacity style={[styles.tab, styles.activeTab]} onPress={() => setWebViewUrl('http://168.172.187.190:8080')}>
@@ -161,26 +143,12 @@ export default function DashboardScreen() {
             </View>
           </TouchableOpacity>
         </View>
-
-        {/* Hamburger Menu Button */}
-        <TouchableOpacity style={styles.menuButton} onPress={toggleDrawer}>
-          <Feather name="menu" size={28} color="black" />
-        </TouchableOpacity>
       </View>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  menuButton: {
-    position: 'absolute',
-    top: 70,
-    left: 10,
-    backgroundColor: 'white',
-    padding: 8,
-    borderRadius: 8,
-    elevation: 5,
-  },
   searchContainer: { position: 'absolute', top: 65, left: 55, right: 15, zIndex: 10 },
   searchInput: {
     width: '100%',
