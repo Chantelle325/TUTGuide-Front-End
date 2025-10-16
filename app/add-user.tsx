@@ -2,13 +2,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity
 } from "react-native";
 import API from "./api";
 
@@ -24,23 +23,23 @@ export default function AddUser() {
   }, []);
 
   const handleAddUser = async () => {
-    if (!fullName || !email) {
-      Alert.alert("Validation Error", "Name and Email are required");
+    if (!email) {
+      Alert.alert("Validation Error", "Email is required");
       return;
     }
 
     try {
       const token = await AsyncStorage.getItem("userToken");
       await API.post(
-        "/users/add",
+        "/dashboard/preloaded-admins",
         { fullName, email, role },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      Alert.alert("Success", "User added successfully");
+      Alert.alert("Success", "Admin added successfully");
       router.back();
     } catch (err: any) {
       console.error(err.response?.data || err.message);
-      Alert.alert("Error", "Failed to add user");
+      Alert.alert("Error", "Failed to add admin");
     }
   };
 
@@ -48,15 +47,8 @@ export default function AddUser() {
     <ScrollView
       contentContainerStyle={[styles.container, darkMode && styles.darkContainer]}
     >
-      <Text style={[styles.title, darkMode && styles.darkText]}>Add New User</Text>
+      <Text style={[styles.title, darkMode && styles.darkText]}>Add New Admin</Text>
 
-      <TextInput
-        style={[styles.input, darkMode && styles.darkInput]}
-        placeholder="Full Name"
-        placeholderTextColor={darkMode ? "#aaa" : "#999"}
-        value={fullName}
-        onChangeText={setFullName}
-      />
 
       <TextInput
         style={[styles.input, darkMode && styles.darkInput]}
@@ -67,30 +59,10 @@ export default function AddUser() {
         keyboardType="email-address"
       />
 
-      <View style={styles.roleContainer}>
-        <Text style={[styles.roleLabel, darkMode && styles.darkText]}>Role:</Text>
-        <TouchableOpacity
-          style={[
-            styles.roleButton,
-            role === "user" && styles.selectedRoleButton,
-          ]}
-          onPress={() => setRole("user")}
-        >
-          <Text style={styles.roleButtonText}>User</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.roleButton,
-            role === "admin" && styles.selectedRoleButton,
-          ]}
-          onPress={() => setRole("admin")}
-        >
-          <Text style={styles.roleButtonText}>Admin</Text>
-        </TouchableOpacity>
-      </View>
+      
 
       <TouchableOpacity style={styles.saveButton} onPress={handleAddUser}>
-        <Text style={styles.saveButtonText}>Add User</Text>
+        <Text style={styles.saveButtonText}>Add Admin</Text>
       </TouchableOpacity>
     </ScrollView>
   );

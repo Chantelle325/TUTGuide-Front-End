@@ -158,7 +158,7 @@ export default function ManageUsers() {
           color="#fff"
           style={{ marginRight: 8 }}
         />
-        <Text style={styles.addButtonText}>Add New User</Text>
+        <Text style={styles.addButtonText}>Add New Admin</Text>
       </TouchableOpacity>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
