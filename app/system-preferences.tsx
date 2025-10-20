@@ -1,14 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
 
 export default function SystemPreferences() {
+  const router = useRouter();
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
   const [autoUpdates, setAutoUpdates] = useState(true);
 
-  // ✅ Load preferences on mount
+  // Load preferences on mount
   useEffect(() => {
     const loadPreferences = async () => {
       const darkPref = await AsyncStorage.getItem("darkMode");
@@ -22,34 +24,28 @@ export default function SystemPreferences() {
     loadPreferences();
   }, []);
 
-  // ✅ Save preferences whenever they change
-  useEffect(() => {
-    AsyncStorage.setItem("darkMode", darkMode.toString());
-  }, [darkMode]);
-
-  useEffect(() => {
-    AsyncStorage.setItem("notifications", notifications.toString());
-  }, [notifications]);
-
-  useEffect(() => {
-    AsyncStorage.setItem("autoUpdates", autoUpdates.toString());
-  }, [autoUpdates]);
-
   // Dynamic styles
   const themeStyles = darkMode ? darkTheme : lightTheme;
 
   return (
-    <ScrollView style={[styles.container, themeStyles.container]}>
-      <Text style={[styles.title, themeStyles.text]}>System Preferences</Text>
+    <ScrollView
+      style={[styles.container, themeStyles.container]}
+      contentContainerStyle={{ paddingTop: 70 }}
+    >
+      {/* Header with Back Button */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={darkMode ? "#fff" : "#333"} />
+        </TouchableOpacity>
+        <Text style={[styles.title, themeStyles.text]}>System Preferences</Text>
+      </View>
 
       {/* Dark Mode */}
       <View style={styles.preferenceRow}>
         <Ionicons name="moon" size={22} color={darkMode ? "#fff" : "#444"} />
         <View style={styles.textContainer}>
           <Text style={[styles.preferenceTitle, themeStyles.text]}>Dark Mode</Text>
-          <Text style={[styles.preferenceDesc, themeStyles.subText]}>
-            Enable dark theme UI
-          </Text>
+          <Text style={[styles.preferenceDesc, themeStyles.subText]}>Enable dark theme UI</Text>
         </View>
         <Switch
           value={darkMode}
@@ -66,9 +62,7 @@ export default function SystemPreferences() {
         <Ionicons name="notifications" size={22} color={darkMode ? "#fff" : "#444"} />
         <View style={styles.textContainer}>
           <Text style={[styles.preferenceTitle, themeStyles.text]}>Notifications</Text>
-          <Text style={[styles.preferenceDesc, themeStyles.subText]}>
-            Allow system notifications
-          </Text>
+          <Text style={[styles.preferenceDesc, themeStyles.subText]}>Allow system notifications</Text>
         </View>
         <Switch
           value={notifications}
@@ -85,9 +79,7 @@ export default function SystemPreferences() {
         <Ionicons name="sync" size={22} color={darkMode ? "#fff" : "#444"} />
         <View style={styles.textContainer}>
           <Text style={[styles.preferenceTitle, themeStyles.text]}>Auto Updates</Text>
-          <Text style={[styles.preferenceDesc, themeStyles.subText]}>
-            Update system automatically
-          </Text>
+          <Text style={[styles.preferenceDesc, themeStyles.subText]}>Update system automatically</Text>
         </View>
         <Switch
           value={autoUpdates}
@@ -103,15 +95,10 @@ export default function SystemPreferences() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
+  container: { flex: 1, padding: 20 },
+  header: { flexDirection: "row", alignItems: "center", marginBottom: 16 },
+  backButton: { marginRight: 10 },
+  title: { fontSize: 22, fontWeight: "bold" },
   preferenceRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -119,17 +106,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#555",
   },
-  textContainer: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  preferenceTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  preferenceDesc: {
-    fontSize: 12,
-  },
+  textContainer: { flex: 1, marginLeft: 12 },
+  preferenceTitle: { fontSize: 16, fontWeight: "600" },
+  preferenceDesc: { fontSize: 12 },
 });
 
 // Light theme

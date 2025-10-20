@@ -7,6 +7,11 @@ import { ActivityIndicator, Alert, Dimensions, ScrollView, StyleSheet, Text, Tou
 import { LineChart } from "react-native-chart-kit";
 import API from "./api";
 
+
+export const options = { headerShown: false };
+
+
+
 const screenWidth = Dimensions.get("window").width;
 
 export default function AdminDashboard() {
@@ -18,6 +23,7 @@ export default function AdminDashboard() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [darkMode, setDarkMode] = useState(false);
 
+  
   const router = useRouter();
 
   // Dashboard counts
@@ -25,6 +31,7 @@ export default function AdminDashboard() {
   const [previousUsers, setPreviousUsers] = useState(0);
   const [totalBuildings, setTotalBuildings] = useState(0);
   const [totalRooms, setTotalRooms] = useState(0);
+  
 
   // Load token & dark mode preference
   useEffect(() => {
@@ -408,7 +415,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#eee" },
   darkContainer: { backgroundColor: "#121212" },
   darkText: { color: "#fff" },
-  header: {flexDirection: "row",justifyContent: "space-between",alignItems: "center",paddingHorizontal: 16,paddingTop: 50,paddingBottom: 16,backgroundColor: "#bbb",},
+  header: {flexDirection: "row",justifyContent: "space-between",alignItems: "center",paddingHorizontal: 16,paddingTop: 80,paddingBottom: 16,backgroundColor: "#bbb",},
   darkHeader: { backgroundColor: "#222" },
   headerLeft: { flexDirection: "row", alignItems: "center" },
   logoContainer: {width: 48,height: 48,borderRadius: 12,backgroundColor: "#fff",justifyContent: "center",alignItems: "center",marginRight: 12,},

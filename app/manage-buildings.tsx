@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
     ActivityIndicator,
@@ -161,6 +162,9 @@ const ManageBuildings = () => {
   return (
     <View style={[styles.container, darkMode && styles.containerDark]}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={28} color={darkMode ? "#fff" : "#000"} />
+        </TouchableOpacity>
         <Text style={[styles.title, darkMode && styles.textLight]}>Manage Buildings</Text>
         <TouchableOpacity onPress={openAddModal}>
           <Ionicons name="add-circle-outline" size={30} color={darkMode ? "#fff" : "#000"} />
@@ -303,7 +307,7 @@ const ManageBuildings = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f5", padding: 10 },
+  container: { flex: 1, backgroundColor: "#f5f5f5", padding: 10 ,paddingTop:70,},
   containerDark: { backgroundColor: "#121212" },
   header: {
     flexDirection: "row",

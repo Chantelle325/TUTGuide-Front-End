@@ -143,10 +143,17 @@ export default function ManageUsers() {
   }
 
   return (
-    <ScrollView style={[styles.container, darkMode && styles.darkContainer]}>
-      <Text style={[styles.title, darkMode && styles.darkText]}>
-        Manage Users
-      </Text>
+    <ScrollView
+      style={[styles.container, darkMode && styles.darkContainer]}
+      contentContainerStyle={{ paddingTop: 70 }}
+    >
+      {/* Header with Back Button */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="arrow-back" size={24} color={darkMode ? "#fff" : "#333"} />
+        </TouchableOpacity>
+        <Text style={[styles.title, darkMode && styles.darkText]}>Manage Users</Text>
+      </View>
 
       <TouchableOpacity
         style={styles.addButton}
@@ -284,7 +291,9 @@ export default function ManageUsers() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: "#f5f5f5" },
   darkContainer: { backgroundColor: "#121212" },
-  title: { fontSize: 24, fontWeight: "bold", marginBottom: 16, color: "#333" },
+  header: { flexDirection: "row", alignItems: "center", marginBottom: 16 },
+  backButton: { marginRight: 10 },
+  title: { fontSize: 24, fontWeight: "bold", color: "#333" },
   darkText: { color: "#fff" },
 
   addButton: {

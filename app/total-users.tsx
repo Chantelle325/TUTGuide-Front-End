@@ -1,11 +1,14 @@
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import API from "./api";
 
@@ -13,6 +16,7 @@ export default function TotalUsers() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -26,7 +30,6 @@ export default function TotalUsers() {
         const response = await API.get("/dashboard/all-users", {
           headers: { Authorization: `Bearer ${savedToken}` },
         });
-        // The backend sends users as { users: [...] }
         setUsers(response.data.users);
       } catch (err: any) {
         console.error(err.response?.data || err.message);
@@ -49,7 +52,17 @@ export default function TotalUsers() {
 
   return (
     <View style={[styles.container, darkMode && styles.darkContainer]}>
-      <Text style={[styles.title, darkMode && styles.darkText]}>All Users</Text>
+      {/* Back arrow and title row */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons
+            name="arrow-back"
+            size={24}
+            color={darkMode ? "#fff" : "#333"}
+          />
+        </TouchableOpacity>
+        <Text style={[styles.title, darkMode && styles.darkText]}>All Users</Text>
+      </View>
 
       {users.length === 0 ? (
         <Text style={[styles.noUsersText, darkMode && styles.darkText]}>
@@ -79,9 +92,11 @@ export default function TotalUsers() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#f5f5f5" },
+  container: { flex: 1, padding: 16, paddingTop: 70, backgroundColor: "#f5f5f5" },
   darkContainer: { backgroundColor: "#121212" },
-  title: { fontSize: 24, fontWeight: "bold", marginBottom: 16, color: "#333" },
+  header: { flexDirection: "row", alignItems: "center", marginBottom: 16 },
+  backButton: { marginRight: 10 },
+  title: { fontSize: 24, fontWeight: "bold", color: "#333" },
   darkText: { color: "#fff" },
   noUsersText: { fontSize: 16, color: "#555" },
   userCard: {

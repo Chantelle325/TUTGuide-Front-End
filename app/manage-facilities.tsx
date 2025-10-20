@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
     Alert,
@@ -105,6 +106,9 @@ const ManageFacilities = () => {
   return (
     <View style={[styles.container, darkMode && styles.containerDark]}>
       <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={28} color={darkMode ? "#fff" : "#000"} />
+        </TouchableOpacity>
         <Text style={[styles.title, darkMode && styles.textLight]}>
           Manage Facilities
         </Text>
@@ -201,7 +205,7 @@ const ManageFacilities = () => {
               onChangeText={(text) => setFormData({ ...formData, name: text })}
             />
             <TextInput
-              placeholder="Short Description (e.g. Food, Fitness)"
+              placeholder="Building No"
               placeholderTextColor={darkMode ? "#aaa" : "#666"}
               style={[styles.input, darkMode && styles.inputDark]}
               value={formData.description}
@@ -244,7 +248,7 @@ const ManageFacilities = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f5", padding: 10 },
+  container: { flex: 1, backgroundColor: "#f5f5f5", padding: 10,paddingTop:70, },
   containerDark: { backgroundColor: "#121212" },
   header: {
     flexDirection: "row",

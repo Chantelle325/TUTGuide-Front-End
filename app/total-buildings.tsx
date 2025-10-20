@@ -1,12 +1,15 @@
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useTheme } from "./ThemeContext";
 import API from "./api";
@@ -20,6 +23,7 @@ const TotalBuildingsScreen = () => {
   const { darkMode } = useTheme();
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchBuildings = async () => {
@@ -55,18 +59,36 @@ const TotalBuildingsScreen = () => {
 
   return (
     <View style={[styles.container, darkMode && styles.containerDark]}>
-      
+      {/* Header with back button */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Ionicons
+            name="arrow-back"
+            size={24}
+            color={darkMode ? "#fff" : "#333"}
+          />
+        </TouchableOpacity>
+        <Text style={[styles.title, darkMode && styles.textLight]}>
+          Total Buildings
+        </Text>
+      </View>
 
       {/* Vertical Scroll */}
-      <ScrollView style={{ flex: 1 }}>
+      <ScrollView style={{ flex: 1, marginTop: 10 }}>
         {/* Horizontal Scroll */}
         <ScrollView horizontal>
-          <View style={{ minWidth: 450 }}>
+          <View style={{ minWidth: 450, marginTop: 10 }}>
             {/* Table Header */}
             <View style={[styles.tableRow, styles.tableHeader]}>
-              
-              <Text style={[styles.cellHeader, { width: 150 }]}>Building No</Text>
-              <Text style={[styles.cellHeader, { width: 250 }]}>Building Name</Text>
+              <Text style={[styles.cellHeader, { width: 150 }]}>
+                Building No
+              </Text>
+              <Text style={[styles.cellHeader, { width: 250 }]}>
+                Building Name
+              </Text>
             </View>
 
             {/* Table Rows */}
@@ -80,22 +102,13 @@ const TotalBuildingsScreen = () => {
                     index % 2 === 0 ? styles.rowEven : styles.rowOdd,
                   ]}
                 >
-                 
                   <Text
-                    style={[
-                      styles.cell,
-                      { width: 150 },
-                      darkMode && styles.textLight,
-                    ]}
+                    style={[styles.cell, { width: 150 }, darkMode && styles.textLight]}
                   >
                     {item.buildingNo ?? "-"}
                   </Text>
                   <Text
-                    style={[
-                      styles.cell,
-                      { width: 250 },
-                      darkMode && styles.textLight,
-                    ]}
+                    style={[styles.cell, { width: 250 }, darkMode && styles.textLight]}
                   >
                     {item.building_Name ?? "-"}
                   </Text>
@@ -110,10 +123,11 @@ const TotalBuildingsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20,paddingTop:40, backgroundColor: "#f5f5f5" },
+  container: { flex: 1, padding: 20, paddingTop: 70, backgroundColor: "#f5f5f5" },
   containerDark: { backgroundColor: "#121212" },
-  title: { fontSize: 22, fontWeight: "700", marginBottom: 20 },
-  text: { fontSize: 16, color: "#000" },
+  header: { flexDirection: "row", alignItems: "center", marginBottom: 10 },
+  backButton: { marginRight: 10 },
+  title: { fontSize: 22, fontWeight: "700", color: "#333" },
   textLight: { color: "#fff" },
   tableRow: {
     flexDirection: "row",

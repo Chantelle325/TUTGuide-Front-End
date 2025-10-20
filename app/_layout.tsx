@@ -18,8 +18,12 @@ export default function RootLayout() {
   return (
     <SoundProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack screenOptions={{ headerShown: false }}>
+          {/* 👇 This will hide the header for *all* screens */}
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="admin-dashboard" />
+          <Stack.Screen name="manage-facilities" />
+          <Stack.Screen name="manage-buildings" />
           <Stack.Screen name="+not-found" />
         </Stack>
         <StatusBar style="auto" />
