@@ -1,7 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
+import { Picker } from "@react-native-picker/picker";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+    ActivityIndicator,
     Alert,
     Modal,
     ScrollView,
@@ -12,11 +14,23 @@ import {
     View,
 } from "react-native";
 import { useTheme } from "./ThemeContext";
+import API from "./api";
 
 interface Facility {
-  id: string;
-  name: string;
-  description: string;
+  facility_ID?: string;
+  facility_Name: string;
+  category: string;
+  buildingNo?: string;
+  latitude?: string;
+  longitude?: string;
+}
+
+interface Building {
+  building_id: string;
+  buildingNo: string;
+  building_Name: string;
+  latitude: string;
+  longitude: string;
 }
 
 const ManageFacilities = () => {
@@ -26,85 +40,166 @@ const ManageFacilities = () => {
   const [searchText, setSearchText] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [editingFacility, setEditingFacility] = useState<Facility | null>(null);
-  const [formData, setFormData] = useState({ name: "", description: "" });
+  const [formData, setFormData] = useState({
+    facility_Name: "",
+    category: "",
+    buildingNo: "",
+    latitude: "",
+    longitude: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [buildings, setBuildings] = useState<Building[]>([]);
+  const [loadingBuildings, setLoadingBuildings] = useState(false);
 
-  // Dummy Data
+  // ✅ Fetch facilities
+  const fetchFacilities = async () => {
+    try {
+      setLoading(true);
+      const response = await API.get("/buildings/get-facilities");
+
+      if (response.data && Array.isArray(response.data)) {
+        setFacilities(response.data);
+        setFilteredFacilities(response.data);
+      } else if (response.data?.facilities) {
+        setFacilities(response.data.facilities);
+        setFilteredFacilities(response.data.facilities);
+      } else {
+        Alert.alert("Error", "Invalid response format from server.");
+      }
+    } catch (error: any) {
+      console.error(error);
+      Alert.alert("Error", "Failed to fetch facilities.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Fetch buildings for dropdown
+  const fetchBuildings = async () => {
+    try {
+      setLoadingBuildings(true);
+      const response = await API.get("/buildings/get-All");
+      if (response.data?.buildings) {
+        setBuildings(response.data.buildings);
+      } else if (Array.isArray(response.data)) {
+        setBuildings(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching buildings:", error);
+      Alert.alert("Error", "Failed to load building numbers.");
+    } finally {
+      setLoadingBuildings(false);
+    }
+  };
+
   useEffect(() => {
-    const dummy = [
-      { id: "1", name: "Computer Lab", description: "Technology" },
-      { id: "2", name: "Auditorium", description: "Events" },
-      { id: "3", name: "Sports Hall", description: "Fitness" },
-      { id: "4", name: "Cafeteria", description: "Food" },
-      { id: "5", name: "Library", description: "Study" },
-      { id: "6", name: "Admin Block", description: "Offices" },
-    ];
-    setFacilities(dummy);
-    setFilteredFacilities(dummy);
+    fetchFacilities();
+    fetchBuildings();
   }, []);
 
-  // 🔍 Search Filter
+  // 🔍 Filter facilities
   useEffect(() => {
     const filtered = facilities.filter(
       (f) =>
-        f.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        f.description.toLowerCase().includes(searchText.toLowerCase())
+        f.facility_Name?.toLowerCase().includes(searchText.toLowerCase()) ||
+        f.category?.toLowerCase().includes(searchText.toLowerCase())
     );
     setFilteredFacilities(filtered);
   }, [searchText, facilities]);
 
   const openAddModal = () => {
     setEditingFacility(null);
-    setFormData({ name: "", description: "" });
+    setFormData({
+      facility_Name: "",
+      category: "",
+      buildingNo: "",
+      latitude: "",
+      longitude: "",
+    });
     setModalVisible(true);
   };
 
   const openEditModal = (facility: Facility) => {
     setEditingFacility(facility);
     setFormData({
-      name: facility.name,
-      description: facility.description,
+      facility_Name: facility.facility_Name,
+      category: facility.category,
+      buildingNo: facility.buildingNo || "",
+      latitude: facility.latitude || "",
+      longitude: facility.longitude || "",
     });
     setModalVisible(true);
   };
 
-  const handleSave = () => {
-    if (!formData.name || !formData.description) {
-      Alert.alert("Validation", "Facility name and description are required.");
+  const handleSave = async () => {
+    if (!formData.facility_Name || !formData.category || !formData.buildingNo) {
+      Alert.alert("Validation", "All fields are required.");
       return;
     }
 
-    if (editingFacility) {
-      setFacilities((prev) =>
-        prev.map((f) =>
-          f.id === editingFacility.id ? { ...f, ...formData } : f
-        )
-      );
-    } else {
-      const newFacility = {
-        id: Date.now().toString(),
-        ...formData,
-      };
-      setFacilities((prev) => [...prev, newFacility]);
-    }
+    try {
+      setLoading(true);
 
-    setModalVisible(false);
+      if (editingFacility) {
+        await API.put(
+          `buildings/updateFacility/${editingFacility.facility_ID}`,formData);
+        Alert.alert("Success", "Facility updated successfully.");
+      } else {
+        await API.post("buildings/add-facilities", formData);
+        Alert.alert("Success", "Facility added successfully.");
+      }
+
+      setModalVisible(false);
+      fetchFacilities();
+    } catch (error: any) {
+      console.error(error);
+      Alert.alert("Error", "Failed to save facility.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id?: string) => {
+    if (!id) {
+      Alert.alert("Error", "Facility ID not found.");
+      return;
+    }
+
     Alert.alert("Confirm Delete", "Delete this facility?", [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
         style: "destructive",
-        onPress: () => {
-          setFacilities((prev) => prev.filter((f) => f.id !== id));
+        onPress: async () => {
+          try {
+            setLoading(true);
+            await API.delete(`buildings/deleteFacility/${id}`);
+            Alert.alert("Deleted", "Facility removed.");
+            fetchFacilities();
+          } catch (error: any) {
+            console.error(error);
+            Alert.alert("Error", "Failed to delete facility.");
+          } finally {
+            setLoading(false);
+          }
         },
       },
     ]);
   };
 
+  // ✅ Handle building selection
+  const handleBuildingSelect = (buildingNo: string) => {
+    const selected = buildings.find((b) => b.buildingNo === buildingNo);
+    setFormData({
+      ...formData,
+      buildingNo,
+     
+    });
+  };
+
   return (
     <View style={[styles.container, darkMode && styles.containerDark]}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={28} color={darkMode ? "#fff" : "#000"} />
@@ -121,11 +216,11 @@ const ManageFacilities = () => {
         </TouchableOpacity>
       </View>
 
-      {/* 🔍 Search Bar */}
+      {/* Search Bar */}
       <View style={[styles.searchBar, darkMode && styles.searchBarDark]}>
         <Ionicons name="search-outline" size={20} color={darkMode ? "#aaa" : "#555"} />
         <TextInput
-          placeholder="Search by facility name or description..."
+          placeholder="Search by facility name or category..."
           placeholderTextColor={darkMode ? "#888" : "#777"}
           style={[styles.searchInput, darkMode && styles.searchInputDark]}
           value={searchText}
@@ -133,61 +228,86 @@ const ManageFacilities = () => {
         />
       </View>
 
-      {/* Scrollable Table */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={true}>
-        <View style={[styles.tableContainer, darkMode && styles.tableContainerDark]}>
-          {/* Header Row */}
-          <View style={[styles.tableRow, styles.tableHeader]}>
-            <Text style={[styles.cellHeader, { width: 60 }]}>#</Text>
-            <Text style={[styles.cellHeader, { width: 250 }]}>Facility Name</Text>
-            <Text style={[styles.cellHeader, { width: 180 }]}>Description</Text>
-            <Text style={[styles.cellHeader, { width: 150 }]}>Actions</Text>
-          </View>
-
-          {/* Data Rows */}
-          {filteredFacilities.length === 0 ? (
-            <View style={styles.emptyRow}>
-              <Text style={[styles.text, darkMode && styles.textLight]}>
-                No facilities found.
-              </Text>
+      {/* Table */}
+      {loading ? (
+        <ActivityIndicator size="large" color="#000" style={{ marginTop: 20 }} />
+      ) : (
+        <ScrollView horizontal showsHorizontalScrollIndicator>
+          <View style={[styles.tableContainer, darkMode && styles.tableContainerDark]}>
+            {/* Header Row */}
+            <View style={[styles.tableRow, styles.tableHeader]}>
+              <Text style={[styles.cellHeader, { width: 60 }]}>#</Text>
+              <Text style={[styles.cellHeader, { width: 200 }]}>Facility Name</Text>
+              <Text style={[styles.cellHeader, { width: 150 }]}>Category</Text>
+              <Text style={[styles.cellHeader, { width: 100 }]}>Building No</Text>
+              <Text style={[styles.cellHeader, { width: 120 }]}>Latitude</Text>
+              <Text style={[styles.cellHeader, { width: 120 }]}>Longitude</Text>
+              <Text style={[styles.cellHeader, { width: 150 }]}>Actions</Text>
             </View>
-          ) : (
-            filteredFacilities.map((f, index) => (
-              <View
-                key={f.id}
-                style={[
-                  styles.tableRow,
-                  index % 2 === 0 ? styles.rowEven : styles.rowOdd,
-                  darkMode && styles.tableRowDark,
-                ]}
-              >
-                <Text style={[styles.cell, { width: 60 }, darkMode && styles.textLight]}>
-                  {index + 1}
+
+            {/* Data Rows */}
+            {filteredFacilities.length === 0 ? (
+              <View style={styles.emptyRow}>
+                <Text style={[styles.text, darkMode && styles.textLight]}>
+                  No facilities found.
                 </Text>
-                <Text style={[styles.cell, { width: 250 }, darkMode && styles.textLight]}>
-                  {f.name}
-                </Text>
-                <Text style={[styles.cell, { width: 180 }, darkMode && styles.textLight]}>
-                  {f.description}
-                </Text>
-                <View
-                  style={[
-                    styles.cell,
-                    { width: 150, flexDirection: "row", justifyContent: "center" },
-                  ]}
-                >
-                  <TouchableOpacity onPress={() => openEditModal(f)} style={styles.actionBtn}>
-                    <Ionicons name="create-outline" size={20} color="#2196F3" />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => handleDelete(f.id)} style={styles.actionBtn}>
-                    <Ionicons name="trash-outline" size={20} color="red" />
-                  </TouchableOpacity>
-                </View>
               </View>
-            ))
-          )}
-        </View>
-      </ScrollView>
+            ) : (
+              filteredFacilities.map((f, index) => {
+                const key = f.facility_ID || f.facility_Name || `facility-${index}`;
+                return (
+                  <View
+                    key={key}
+                    style={[
+                      styles.tableRow,
+                      index % 2 === 0 ? styles.rowEven : styles.rowOdd,
+                      darkMode && styles.tableRowDark,
+                    ]}
+                  >
+                    <Text style={[styles.cell, { width: 60 }, darkMode && styles.textLight]}>
+                      {index + 1}
+                    </Text>
+                    <Text style={[styles.cell, { width: 200 }, darkMode && styles.textLight]}>
+                      {f.facility_Name}
+                    </Text>
+                    <Text style={[styles.cell, { width: 150 }, darkMode && styles.textLight]}>
+                      {f.category}
+                    </Text>
+                    <Text style={[styles.cell, { width: 100 }, darkMode && styles.textLight]}>
+                      {f.buildingNo}
+                    </Text>
+                    <Text style={[styles.cell, { width: 120 }, darkMode && styles.textLight]}>
+                      {f.latitude}
+                    </Text>
+                    <Text style={[styles.cell, { width: 120 }, darkMode && styles.textLight]}>
+                      {f.longitude}
+                    </Text>
+                    <View
+                      style={[
+                        styles.cell,
+                        { width: 150, flexDirection: "row", justifyContent: "center" },
+                      ]}
+                    >
+                      <TouchableOpacity
+                        onPress={() => openEditModal(f)}
+                        style={styles.actionBtn}
+                      >
+                        <Ionicons name="create-outline" size={20} color="#2196F3" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => handleDelete(f.facility_ID)}
+                        style={styles.actionBtn}
+                      >
+                        <Ionicons name="trash-outline" size={20} color="red" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                );
+              })
+            )}
+          </View>
+        </ScrollView>
+      )}
 
       {/* Add/Edit Modal */}
       <Modal visible={modalVisible} transparent animationType="slide">
@@ -197,35 +317,75 @@ const ManageFacilities = () => {
               {editingFacility ? "Edit Facility" : "Add Facility"}
             </Text>
 
+            {/* Facility Name */}
             <TextInput
               placeholder="Facility Name"
               placeholderTextColor={darkMode ? "#aaa" : "#666"}
               style={[styles.input, darkMode && styles.inputDark]}
-              value={formData.name}
-              onChangeText={(text) => setFormData({ ...formData, name: text })}
+              value={formData.facility_Name}
+              onChangeText={(text) =>
+                setFormData({ ...formData, facility_Name: text })
+              }
             />
+
+            {/* Category */}
             <TextInput
-              placeholder="Building No"
+              placeholder="Category"
               placeholderTextColor={darkMode ? "#aaa" : "#666"}
               style={[styles.input, darkMode && styles.inputDark]}
-              value={formData.description}
-              onChangeText={(text) => setFormData({ ...formData, description: text })}
+              value={formData.category}
+              onChangeText={(text) => setFormData({ ...formData, category: text })}
             />
-             <TextInput
+
+           {/* Building Dropdown */}
+<View
+  style={[
+    styles.dropdownContainer,
+    darkMode && styles.inputDark,
+    { maxHeight: 150 }, // limit height for scroll
+  ]}
+>
+  {loadingBuildings ? (
+    <ActivityIndicator size="small" color={darkMode ? "#fff" : "#000"} />
+  ) : (
+    <ScrollView nestedScrollEnabled>
+      <Picker
+        selectedValue={formData.buildingNo}
+        onValueChange={handleBuildingSelect}
+        style={[styles.dropdown, darkMode && styles.dropdownDark]}
+        dropdownIconColor={darkMode ? "#fff" : "#000"}
+      >
+        <Picker.Item label="Select Building No" value="" />
+        {buildings.map((b) => (
+          <Picker.Item
+            key={b.building_id}
+            label={b.buildingNo}
+            value={b.buildingNo}
+          />
+        ))}
+      </Picker>
+    </ScrollView>
+  )}
+</View>
+
+
+            {/* Latitude & Longitude */}
+            <TextInput
               placeholder="Latitude"
               placeholderTextColor={darkMode ? "#aaa" : "#666"}
               style={[styles.input, darkMode && styles.inputDark]}
-              value={formData.description}
-              onChangeText={(text) => setFormData({ ...formData, description: text })}
+              value={formData.latitude}
+              onChangeText={(text) => setFormData({ ...formData, latitude: text })}
             />
-             <TextInput
+            <TextInput
               placeholder="Longitude"
               placeholderTextColor={darkMode ? "#aaa" : "#666"}
               style={[styles.input, darkMode && styles.inputDark]}
-              value={formData.description}
-              onChangeText={(text) => setFormData({ ...formData, description: text })}
+              value={formData.longitude}
+              onChangeText={(text) => setFormData({ ...formData, longitude: text })}
             />
 
+            {/* Buttons */}
             <View style={styles.modalButtons}>
               <TouchableOpacity
                 style={[styles.modalBtn, { backgroundColor: "#ccc" }]}
@@ -248,7 +408,7 @@ const ManageFacilities = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f5", padding: 10,paddingTop:70, },
+  container: { flex: 1, backgroundColor: "#f5f5f5", padding: 10, paddingTop: 70 },
   containerDark: { backgroundColor: "#121212" },
   header: {
     flexDirection: "row",
@@ -259,8 +419,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: "700" },
   textLight: { color: "#fff" },
   text: { fontSize: 16, color: "#000" },
-
-  // 🔍 Search Bar
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -275,14 +433,12 @@ const styles = StyleSheet.create({
   searchBarDark: { backgroundColor: "#1e1e1e", borderColor: "#333" },
   searchInput: { flex: 1, marginLeft: 8, color: "#000", fontSize: 15 },
   searchInputDark: { color: "#fff" },
-
-  // Table
   tableContainer: {
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
     overflow: "hidden",
-    minWidth: 650,
+    minWidth: 850,
     backgroundColor: "#fff",
   },
   tableContainerDark: { borderColor: "#333", backgroundColor: "#1e1e1e" },
@@ -317,8 +473,6 @@ const styles = StyleSheet.create({
   rowOdd: { backgroundColor: "#fff" },
   emptyRow: { padding: 20, alignItems: "center" },
   actionBtn: { marginHorizontal: 6 },
-
-  // Modal
   modalOverlay: {
     flex: 1,
     justifyContent: "center",
@@ -337,6 +491,15 @@ const styles = StyleSheet.create({
     color: "#000",
   },
   inputDark: { borderColor: "#555", color: "#fff" },
+  dropdownContainer: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    marginBottom: 10,
+    backgroundColor: "#fff",
+  },
+  dropdown: { height: 50, color: "#000" },
+  dropdownDark: { backgroundColor: "#333", color: "#fff" },
   modalButtons: { flexDirection: "row", justifyContent: "flex-end", gap: 10 },
   modalBtn: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
 });

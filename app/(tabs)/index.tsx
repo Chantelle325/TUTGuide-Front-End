@@ -71,9 +71,9 @@ export default function LoginScreen() {
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             <View style={styles.logoCircle}>
-              <Image source={require('@/assets/images/tutguide1.png')} style={styles.logoImage} resizeMode="contain" />
+              <Image source={require('@/assets/images/tutguide3.png')} style={styles.logoImage} resizeMode="contain" />
             </View>
-            <ThemedText style={styles.logoTextMain}>TUTGuide</ThemedText>
+            
           </View>
         </View>
 
@@ -168,15 +168,20 @@ const styles = StyleSheet.create({
   },
   logoContainer: { flexDirection: 'row', alignItems: 'center' },
   logoCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 80,
+    height: 80,
+    borderRadius: 50,
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12
   },
-  logoImage: { width: 40, height: 40 },
+  logoImage: {
+  width: 80,           // larger than circle, will zoom in
+  height: 80,          // larger than circle
+  borderRadius: 40,    // optional: makes image circular
+  resizeMode: 'cover', // fills the circle area
+},
   logoTextMain: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
   contentContainer: {
     flex: 1,

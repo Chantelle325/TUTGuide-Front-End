@@ -32,7 +32,7 @@ export default function DashboardScreen() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerAnim] = useState(new Animated.Value(-DRAWER_WIDTH));
   const [savedPlaces, setSavedPlaces] = useState<LocationType[]>([]);
-  const [webViewUrl, setWebViewUrl] = useState<string>('http://168.172.187.190:8080'); // default web app
+  const [webViewUrl, setWebViewUrl] = useState<string>('https://map-tut.vercel.app/'); // default web app
 
   const toggleDrawer = () => {
     if (drawerOpen) {
@@ -124,7 +124,7 @@ export default function DashboardScreen() {
 
         {/* Footer Tabs */}
         <View style={styles.footer}>
-          <TouchableOpacity style={[styles.tab, styles.activeTab]} onPress={() => setWebViewUrl('http://168.172.187.190:8080')}>
+          <TouchableOpacity style={[styles.tab, styles.activeTab]} onPress={() => setWebViewUrl('https://map-tut.vercel.app/')}>
             <View style={styles.tabContent}>
               <Feather name="home" size={24} color="#9fc3c3" />
               <ThemedText style={[styles.tabText, styles.activeTabText]}>Home</ThemedText>
