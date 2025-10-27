@@ -23,7 +23,6 @@ export default function AdminDashboard() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [darkMode, setDarkMode] = useState(false);
 
-  
   const router = useRouter();
 
   // Dashboard counts
