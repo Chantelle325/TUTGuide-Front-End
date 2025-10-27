@@ -1,8 +1,9 @@
 import { ThemedText } from '@/components/ThemedText';
 import { Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Location from 'expo-location';
 import { Stack, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
@@ -18,58 +19,80 @@ import { WebView } from 'react-native-webview';
 const { width: screenWidth } = Dimensions.get('window');
 const DRAWER_WIDTH = screenWidth * 0.75;
 
-type LocationType = {
-  name: string;
-};
+type LocationType = { name: string };
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const webViewRef = useRef<WebView>(null);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filteredLocations, setFilteredLocations] = useState<LocationType[]>([]);
   const [userName, setUserName] = useState('User');
   const [userProfileImage, setUserProfileImage] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerAnim] = useState(new Animated.Value(-DRAWER_WIDTH));
   const [savedPlaces, setSavedPlaces] = useState<LocationType[]>([]);
+  // const [webViewUrl, setWebViewUrl] = useState<string>('https://map-tut.vercel.app/');
   const [webViewUrl, setWebViewUrl] = useState<string>('https://tutguide.netlify.app/'); // default web app
 
   const toggleDrawer = () => {
     if (drawerOpen) {
-      Animated.timing(drawerAnim, {
-        toValue: -DRAWER_WIDTH,
-        duration: 300,
-        useNativeDriver: true,
-      }).start(() => setDrawerOpen(false));
+      Animated.timing(drawerAnim, { toValue: -DRAWER_WIDTH, duration: 300, useNativeDriver: true }).start(() => setDrawerOpen(false));
     } else {
       setDrawerOpen(true);
-      Animated.timing(drawerAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
+      Animated.timing(drawerAnim, { toValue: 0, duration: 300, useNativeDriver: true }).start();
     }
   };
 
+  // Load user data
   useEffect(() => {
     (async () => {
       const name = await AsyncStorage.getItem('userName');
       if (name) setUserName(name);
-
       const uri = await AsyncStorage.getItem('profileImage');
       if (uri) setUserProfileImage(uri);
-
       const saved = await AsyncStorage.getItem('savedPlaces');
       if (saved) setSavedPlaces(JSON.parse(saved));
     })();
   }, []);
 
+// In your Expo app
+const [webViewUrl, setWebViewUrl] = useState<string>('http://168.172.185.27:8085/');
+const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
+
+useEffect(() => {
+  let subscription: Location.LocationSubscription;
+
+  (async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') return;
+
+    subscription = await Location.watchPositionAsync(
+      { accuracy: Location.Accuracy.Highest, distanceInterval: 5, timeInterval: 5000 },
+      (loc) => {
+        const { latitude, longitude } = loc.coords;
+        setCurrentLocation({ lat: latitude, lng: longitude });
+        
+        // Update WebView URL with coordinates
+        const url = `http://168.172.185.27:8085/?lat=${latitude}&lng=${longitude}`;
+        setWebViewUrl(url);
+      }
+    );
+  })();
+
+  return () => subscription?.remove();
+}, []);
+
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={{ flex: 1 }}>
-        {/* WebView */}
-        <WebView source={{ uri: webViewUrl }} style={{ flex: 1 }} />
+        {/* WebView Map */}
+        <WebView
+          ref={webViewRef}
+          source={{ uri: webViewUrl }}
+          style={{ flex: 1 }}
+          originWhitelist={['*']}
+        />
 
         {/* Drawer Overlay */}
         {drawerOpen && (
@@ -87,12 +110,7 @@ export default function DashboardScreen() {
             {userProfileImage ? (
               <Image source={{ uri: userProfileImage }} style={styles.drawerProfileImage} />
             ) : (
-              <View
-                style={[
-                  styles.drawerProfileImage,
-                  { backgroundColor: '#ddd', justifyContent: 'center', alignItems: 'center' },
-                ]}
-              >
+              <View style={[styles.drawerProfileImage, { backgroundColor: '#ddd', justifyContent: 'center', alignItems: 'center' }]}>
                 <Feather name="user" size={40} color="#888" />
               </View>
             )}
@@ -149,6 +167,18 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 5,
+    borderTopWidth: 2,
+    borderTopColor: '#eee',
+    backgroundColor: 'white',
+  },
   searchContainer: { position: 'absolute', top: 65, left: 55, right: 15, zIndex: 10 },
   searchInput: {width: '100%',padding: 14,borderWidth: 1,borderColor: '#ccc',borderRadius: 25,backgroundColor: '#fff',fontSize: 15,color: '#222',shadowColor: '#000',shadowOpacity: 0.1,shadowRadius: 3,elevation: 4,},
   footer: {position: 'absolute',bottom: 0,left: 0,right: 0,flexDirection: 'row',justifyContent: 'space-around',paddingVertical: 5,borderTopWidth: 2,borderTopColor: '#eee',backgroundColor: 'white',},
@@ -157,6 +187,30 @@ const styles = StyleSheet.create({
   tabContent: { alignItems: 'center' },
   tabText: { fontWeight: 'bold', fontSize: 14, color: '#9fc3c3', textTransform: 'uppercase' },
   activeTabText: { color: 'black' },
+  drawer: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: DRAWER_WIDTH,
+    height: '100%',
+    backgroundColor: '#f5f5f5',
+    paddingTop: 40,
+    paddingHorizontal: 20,
+    zIndex: 20,
+  },
+  drawerOverlay: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    zIndex: 15,
+  },
+  drawerHeader: { alignItems: 'center', marginBottom: 30 },
+  drawerProfileImage: { width: 80, height: 80, borderRadius: 40, marginBottom: 10 },
+  drawerName: { fontSize: 18, fontWeight: '700', color: '#2e4b6d' },
+  drawerItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#ccc' },
   drawer: {position: 'absolute',left: 0,top: 0,width: DRAWER_WIDTH,height: '100%',backgroundColor: '#f5f5f5',paddingTop: 40,paddingHorizontal: 20,zIndex: 20,},
   drawerOverlay: {position: 'absolute',left: 0,top: 0,width: '100%',height: '100%',backgroundColor: 'rgba(0,0,0,0.3)',zIndex: 15,},
   drawerHeader: {alignItems: 'center',marginBottom: 30,},
@@ -164,5 +218,6 @@ const styles = StyleSheet.create({
   drawerName: {fontSize: 18,fontWeight: '700',color: '#2e4b6d'},
   drawerItem: {flexDirection: 'row',alignItems: 'center',paddingVertical: 12,borderBottomWidth: 1,borderBottomColor: '#ccc',},
   closeButton: { position: 'absolute', right: 0, top: 0, padding: 10 },
+  savedPlacesTitle: { fontSize: 16, fontWeight: '700', color: '#2e4b6d', marginTop: 20, marginBottom: 10 },
   savedPlacesTitle: {fontSize: 16,fontWeight: '700',color: '#2e4b6d',marginTop: 20,marginBottom: 10, },
 });
