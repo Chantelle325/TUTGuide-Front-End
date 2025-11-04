@@ -66,11 +66,6 @@ export default function SignUpScreen() {
         'Password must be at least 8 characters long, include uppercase, lowercase, number, and special character.'
       );
 
-    // ❌ Restrict admin registration
-    if (role === 'admin') {
-      return Alert.alert('Not Authorized', 'You are not authorised to register as an admin.');
-    }
-
     try {
       setLoading(true);
 
