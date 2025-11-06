@@ -7,7 +7,6 @@ import { ActivityIndicator, Alert, Dimensions, ScrollView, StyleSheet, Text, Tou
 import { LineChart } from "react-native-chart-kit";
 import API from "./api";
 
-
 export const options = { headerShown: false };
 
 
@@ -22,6 +21,7 @@ export default function AdminDashboard() {
   const [viewedFeedbackIds, setViewedFeedbackIds] = useState<number[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [darkMode, setDarkMode] = useState(false);
+
 
   const router = useRouter();
 
@@ -50,6 +50,7 @@ export default function AdminDashboard() {
     };
     init();
   }, []);
+
 
   // Refresh dark mode when returning from settings
   useFocusEffect(

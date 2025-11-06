@@ -31,7 +31,7 @@ export default function DashboardScreen() {
   const [drawerAnim] = useState(new Animated.Value(-DRAWER_WIDTH));
   const [savedPlaces, setSavedPlaces] = useState<LocationType[]>([]);
   // const [webViewUrl, setWebViewUrl] = useState<string>('https://map-tut.vercel.app/');
-  const [webViewUrl, setWebViewUrl] = useState<string>('https://tutguide.netlify.app/'); // default web app
+  const [webViewUrl, setWebViewUrl] = useState<string>('https://inquisitive-tulumba-d04333.netlify.app/'); // default web app
 
   const toggleDrawer = () => {
     if (drawerOpen) {
@@ -72,7 +72,7 @@ useEffect(() => {
         setCurrentLocation({ lat: latitude, lng: longitude });
         
         // Update WebView URL with coordinates
-        const url = `https://tutguide.netlify.app/?lat=${latitude}&lng=${longitude}`;
+        const url = `https://inquisitive-tulumba-d04333.netlify.app/?lat=${latitude}&lng=${longitude}`;
         setWebViewUrl(url);
       }
     );
@@ -142,7 +142,7 @@ useEffect(() => {
 
         {/* Footer Tabs */}
         <View style={styles.footer}>
-          <TouchableOpacity style={[styles.tab, styles.activeTab]} onPress={() => setWebViewUrl('https://tutguide.netlify.app/')}>
+          <TouchableOpacity style={[styles.tab, styles.activeTab]} onPress={() => setWebViewUrl('https://inquisitive-tulumba-d04333.netlify.app/')}>
             <View style={styles.tabContent}>
               <Feather name="map-pin" size={24} color="#9fc3c3" />
               <ThemedText style={[styles.tabText, styles.activeTabText]}>Map</ThemedText>
