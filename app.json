@@ -4,26 +4,32 @@
     "slug": "TUTGuide",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/tutguide3.png",
     "scheme": "tutguide",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+
     "ios": {
       "supportsTablet": true
     },
+
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/images/tutguide3.png",
+        "backgroundColor": "#ffffff",
+        "monochromeImage": "./assets/images/tutguide3.png"
       },
+      "icon": "./assets/images/tutguide3.png",
       "edgeToEdgeEnabled": true,
       "package": "com.anonymous.TUTGuide"
     },
+
     "web": {
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+
     "plugins": [
       "expo-router",
       [
@@ -36,8 +42,16 @@
         }
       ]
     ],
+
     "experiments": {
       "typedRoutes": true
+    },
+
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9572a04c-cf8c-4825-bb0e-2b491ff3d1a8"
+      }
     }
   }
 }

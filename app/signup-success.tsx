@@ -22,7 +22,7 @@ export default function SignUpSuccessScreen() {
       <View style={styles.logoContainer}>
         <View style={styles.logoCircle}>
           <Image 
-            source={require('@/assets/images/tutguide1.png')}
+            source={require('@/assets/images/tutguide3.png')}
             style={styles.logoImage}
             resizeMode="contain"
           />
