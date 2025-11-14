@@ -29,6 +29,7 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="tutguide"/>
+        <data android:scheme="exp+tutguide"/>
       </intent-filter>
     </activity>
   </application>

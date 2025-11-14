@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "10654591513",
+    "project_id": "tutguide-236f6",
+    "storage_bucket": "tutguide-236f6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:10654591513:android:bc8daa0827b24b52ca1888",
+        "android_client_info": {
+          "package_name": "com.anonymous.TUTGuide"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHhl6mooGVSTG-XwM8n-n3eWqw6ikUk2s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
