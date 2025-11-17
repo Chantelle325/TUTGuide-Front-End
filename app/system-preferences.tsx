@@ -1,4 +1,3 @@
-// system-preferences.tsx
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import messaging from "@react-native-firebase/messaging";
@@ -21,15 +20,26 @@ export default function SystemPreferences() {
         const darkPref = await AsyncStorage.getItem("darkMode");
         const notifPref = await AsyncStorage.getItem("notifications");
         const updatePref = await AsyncStorage.getItem("autoUpdates");
-        const email = await AsyncStorage.getItem("admin_email");
 
         if (darkPref !== null) setDarkMode(darkPref === "true");
         if (notifPref !== null) setNotifications(notifPref === "true");
         if (updatePref !== null) setAutoUpdates(updatePref === "true");
-        if (email) setAdminEmail(email);
+
+        // ✅ Try to get admin email from multiple possible keys
+        let email = await AsyncStorage.getItem("admin_email");
+        if (!email) {
+          email = await AsyncStorage.getItem("email"); // fallback to legacy key
+          if (email) {
+            // store under the correct key
+            await AsyncStorage.setItem("admin_email", email);
+          }
+        }
 
         if (email) {
+          setAdminEmail(email);
           await setupFCMToken(email, notifPref !== "false");
+        } else {
+          console.warn("Admin email not found in AsyncStorage. Notifications will not work.");
         }
       } catch (err) {
         console.error("Error loading preferences:", err);
@@ -72,7 +82,7 @@ export default function SystemPreferences() {
     await AsyncStorage.setItem("notifications", val.toString());
 
     if (!adminEmail) {
-      Alert.alert("Error", "Admin email not found. Please log in again.");
+      Alert.alert("Error", "Admin email not found. Notifications cannot be updated.");
       return;
     }
 
@@ -124,7 +134,11 @@ export default function SystemPreferences() {
           <Text style={[styles.preferenceTitle, themeStyles.text]}>Notifications</Text>
           <Text style={[styles.preferenceDesc, themeStyles.subText]}>Allow system notifications</Text>
         </View>
-        <Switch value={notifications} onValueChange={handleNotificationToggle} thumbColor={notifications ? "#4CAF50" : "#f4f3f4"} />
+        <Switch
+          value={notifications}
+          onValueChange={handleNotificationToggle}
+          thumbColor={notifications ? "#4CAF50" : "#f4f3f4"}
+        />
       </View>
 
       {/* Auto Updates */}

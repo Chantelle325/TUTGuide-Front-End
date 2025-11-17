@@ -45,6 +45,12 @@ export default function LoginScreen() {
       await AsyncStorage.setItem('userRole', user.role);
       await AsyncStorage.setItem('userName', user.fullName || user.email.split('@')[0]);
 
+      // new line
+      await AsyncStorage.setItem("admin_email", user.email);
+
+
+
+
       
 
       if (user.role === 'admin') {
