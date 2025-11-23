@@ -1,17 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Picker } from "@react-native-picker/picker";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useTheme } from "./ThemeContext";
 import API from "./api";
@@ -23,6 +24,10 @@ interface Facility {
   buildingNo?: string;
   latitude?: string;
   longitude?: string;
+  floor?: string;
+  description?: string;
+  contact?: string;
+  hours?: string;
 }
 
 interface Building {
@@ -40,33 +45,41 @@ const ManageFacilities = () => {
   const [searchText, setSearchText] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [editingFacility, setEditingFacility] = useState<Facility | null>(null);
+
   const [formData, setFormData] = useState({
     facility_Name: "",
     category: "",
     buildingNo: "",
+    floor: "",
+    description: "",
+    contact: "",
+    hours: "",
     latitude: "",
     longitude: "",
   });
+
   const [loading, setLoading] = useState(false);
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [loadingBuildings, setLoadingBuildings] = useState(false);
 
-  // ✅ Fetch facilities
+  useEffect(() => {
+    fetchFacilities();
+    fetchBuildings();
+  }, []);
+
   const fetchFacilities = async () => {
     try {
       setLoading(true);
       const response = await API.get("/buildings/get-facilities");
 
-      if (response.data && Array.isArray(response.data)) {
-        setFacilities(response.data);
-        setFilteredFacilities(response.data);
-      } else if (response.data?.facilities) {
+      if (response.data?.facilities) {
         setFacilities(response.data.facilities);
         setFilteredFacilities(response.data.facilities);
-      } else {
-        Alert.alert("Error", "Invalid response format from server.");
+      } else if (Array.isArray(response.data)) {
+        setFacilities(response.data);
+        setFilteredFacilities(response.data);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error(error);
       Alert.alert("Error", "Failed to fetch facilities.");
     } finally {
@@ -74,7 +87,6 @@ const ManageFacilities = () => {
     }
   };
 
-  // ✅ Fetch buildings for dropdown
   const fetchBuildings = async () => {
     try {
       setLoadingBuildings(true);
@@ -85,19 +97,13 @@ const ManageFacilities = () => {
         setBuildings(response.data);
       }
     } catch (error) {
-      console.error("Error fetching buildings:", error);
+      console.error(error);
       Alert.alert("Error", "Failed to load building numbers.");
     } finally {
       setLoadingBuildings(false);
     }
   };
 
-  useEffect(() => {
-    fetchFacilities();
-    fetchBuildings();
-  }, []);
-
-  // 🔍 Filter facilities
   useEffect(() => {
     const filtered = facilities.filter(
       (f) =>
@@ -113,6 +119,10 @@ const ManageFacilities = () => {
       facility_Name: "",
       category: "",
       buildingNo: "",
+      floor: "",
+      description: "",
+      contact: "",
+      hours: "",
       latitude: "",
       longitude: "",
     });
@@ -125,6 +135,10 @@ const ManageFacilities = () => {
       facility_Name: facility.facility_Name,
       category: facility.category,
       buildingNo: facility.buildingNo || "",
+      floor: facility.floor || "",
+      description: facility.description || "",
+      contact: facility.contact || "",
+      hours: facility.hours || "",
       latitude: facility.latitude || "",
       longitude: facility.longitude || "",
     });
@@ -133,25 +147,37 @@ const ManageFacilities = () => {
 
   const handleSave = async () => {
     if (!formData.facility_Name || !formData.category || !formData.buildingNo) {
-      Alert.alert("Validation", "All fields are required.");
+      Alert.alert(
+        "Validation",
+        "Facility Name, Category, and Building No are required."
+      );
       return;
     }
 
     try {
       setLoading(true);
-
       if (editingFacility) {
         await API.put(
-          `buildings/updateFacility/${editingFacility.facility_ID}`,formData);
+          `buildings/updateFacility/${editingFacility.facility_ID}`,
+          formData
+        );
+
         Alert.alert("Success", "Facility updated successfully.");
       } else {
-        await API.post("buildings/add-facilities", formData);
+        const admin_email = await AsyncStorage.getItem("admin_email"); // match backend
+
+        const payload = {
+          ...formData,
+          performedByAdmin: admin_email || "",
+        };
+
+        await API.post("buildings/add-facilities", payload);
+
         Alert.alert("Success", "Facility added successfully.");
       }
-
       setModalVisible(false);
       fetchFacilities();
-    } catch (error: any) {
+    } catch (error) {
       console.error(error);
       Alert.alert("Error", "Failed to save facility.");
     } finally {
@@ -160,10 +186,7 @@ const ManageFacilities = () => {
   };
 
   const handleDelete = (id?: string) => {
-    if (!id) {
-      Alert.alert("Error", "Facility ID not found.");
-      return;
-    }
+    if (!id) return Alert.alert("Error", "Facility ID not found.");
 
     Alert.alert("Confirm Delete", "Delete this facility?", [
       { text: "Cancel", style: "cancel" },
@@ -176,7 +199,7 @@ const ManageFacilities = () => {
             await API.delete(`buildings/deleteFacility/${id}`);
             Alert.alert("Deleted", "Facility removed.");
             fetchFacilities();
-          } catch (error: any) {
+          } catch (error) {
             console.error(error);
             Alert.alert("Error", "Failed to delete facility.");
           } finally {
@@ -187,14 +210,8 @@ const ManageFacilities = () => {
     ]);
   };
 
-  // ✅ Handle building selection
   const handleBuildingSelect = (buildingNo: string) => {
-    const selected = buildings.find((b) => b.buildingNo === buildingNo);
-    setFormData({
-      ...formData,
-      buildingNo,
-     
-    });
+    setFormData({ ...formData, buildingNo });
   };
 
   return (
@@ -202,7 +219,11 @@ const ManageFacilities = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={28} color={darkMode ? "#fff" : "#000"} />
+          <Ionicons
+            name="arrow-back"
+            size={28}
+            color={darkMode ? "#fff" : "#000"}
+          />
         </TouchableOpacity>
         <Text style={[styles.title, darkMode && styles.textLight]}>
           Manage Facilities
@@ -216,9 +237,13 @@ const ManageFacilities = () => {
         </TouchableOpacity>
       </View>
 
-      {/* Search Bar */}
+      {/* Search */}
       <View style={[styles.searchBar, darkMode && styles.searchBarDark]}>
-        <Ionicons name="search-outline" size={20} color={darkMode ? "#aaa" : "#555"} />
+        <Ionicons
+          name="search-outline"
+          size={20}
+          color={darkMode ? "#aaa" : "#555"}
+        />
         <TextInput
           placeholder="Search by facility name or category..."
           placeholderTextColor={darkMode ? "#888" : "#777"}
@@ -230,16 +255,35 @@ const ManageFacilities = () => {
 
       {/* Table */}
       {loading ? (
-        <ActivityIndicator size="large" color="#000" style={{ marginTop: 20 }} />
+        <ActivityIndicator
+          size="large"
+          color="#000"
+          style={{ marginTop: 20 }}
+        />
       ) : (
         <ScrollView horizontal showsHorizontalScrollIndicator>
-          <View style={[styles.tableContainer, darkMode && styles.tableContainerDark]}>
-            {/* Header Row */}
+          <View
+            style={[
+              styles.tableContainer,
+              darkMode && styles.tableContainerDark,
+            ]}
+          >
+            {/* Header */}
             <View style={[styles.tableRow, styles.tableHeader]}>
               <Text style={[styles.cellHeader, { width: 60 }]}>#</Text>
-              <Text style={[styles.cellHeader, { width: 200 }]}>Facility Name</Text>
+              <Text style={[styles.cellHeader, { width: 200 }]}>
+                Facility Name
+              </Text>
               <Text style={[styles.cellHeader, { width: 150 }]}>Category</Text>
-              <Text style={[styles.cellHeader, { width: 100 }]}>Building No</Text>
+              <Text style={[styles.cellHeader, { width: 100 }]}>
+                Building No
+              </Text>
+              <Text style={[styles.cellHeader, { width: 80 }]}>Floor</Text>
+              <Text style={[styles.cellHeader, { width: 200 }]}>
+                Description
+              </Text>
+              <Text style={[styles.cellHeader, { width: 120 }]}>Contact</Text>
+              <Text style={[styles.cellHeader, { width: 120 }]}>Hours</Text>
               <Text style={[styles.cellHeader, { width: 120 }]}>Latitude</Text>
               <Text style={[styles.cellHeader, { width: 120 }]}>Longitude</Text>
               <Text style={[styles.cellHeader, { width: 150 }]}>Actions</Text>
@@ -253,154 +297,262 @@ const ManageFacilities = () => {
                 </Text>
               </View>
             ) : (
-              filteredFacilities.map((f, index) => {
-                const key = f.facility_ID || f.facility_Name || `facility-${index}`;
-                return (
-                  <View
-                    key={key}
+              filteredFacilities.map((f, index) => (
+                <View
+                  key={f.facility_ID || `facility-${index}`}
+                  style={[
+                    styles.tableRow,
+                    index % 2 === 0 ? styles.rowEven : styles.rowOdd,
+                    darkMode && styles.tableRowDark,
+                  ]}
+                >
+                  <Text
                     style={[
-                      styles.tableRow,
-                      index % 2 === 0 ? styles.rowEven : styles.rowOdd,
-                      darkMode && styles.tableRowDark,
+                      styles.cell,
+                      { width: 60 },
+                      darkMode && styles.textLight,
                     ]}
                   >
-                    <Text style={[styles.cell, { width: 60 }, darkMode && styles.textLight]}>
-                      {index + 1}
-                    </Text>
-                    <Text style={[styles.cell, { width: 200 }, darkMode && styles.textLight]}>
-                      {f.facility_Name}
-                    </Text>
-                    <Text style={[styles.cell, { width: 150 }, darkMode && styles.textLight]}>
-                      {f.category}
-                    </Text>
-                    <Text style={[styles.cell, { width: 100 }, darkMode && styles.textLight]}>
-                      {f.buildingNo}
-                    </Text>
-                    <Text style={[styles.cell, { width: 120 }, darkMode && styles.textLight]}>
-                      {f.latitude}
-                    </Text>
-                    <Text style={[styles.cell, { width: 120 }, darkMode && styles.textLight]}>
-                      {f.longitude}
-                    </Text>
-                    <View
-                      style={[
-                        styles.cell,
-                        { width: 150, flexDirection: "row", justifyContent: "center" },
-                      ]}
+                    {index + 1}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.cell,
+                      { width: 200 },
+                      darkMode && styles.textLight,
+                    ]}
+                  >
+                    {f.facility_Name}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.cell,
+                      { width: 150 },
+                      darkMode && styles.textLight,
+                    ]}
+                  >
+                    {f.category}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.cell,
+                      { width: 100 },
+                      darkMode && styles.textLight,
+                    ]}
+                  >
+                    {f.buildingNo}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.cell,
+                      { width: 80 },
+                      darkMode && styles.textLight,
+                    ]}
+                  >
+                    {f.floor}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.cell,
+                      { width: 200 },
+                      darkMode && styles.textLight,
+                    ]}
+                  >
+                    {f.description}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.cell,
+                      { width: 120 },
+                      darkMode && styles.textLight,
+                    ]}
+                  >
+                    {f.contact}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.cell,
+                      { width: 120 },
+                      darkMode && styles.textLight,
+                    ]}
+                  >
+                    {f.hours}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.cell,
+                      { width: 120 },
+                      darkMode && styles.textLight,
+                    ]}
+                  >
+                    {f.latitude}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.cell,
+                      { width: 120 },
+                      darkMode && styles.textLight,
+                    ]}
+                  >
+                    {f.longitude}
+                  </Text>
+                  <View
+                    style={[
+                      styles.cell,
+                      {
+                        width: 150,
+                        flexDirection: "row",
+                        justifyContent: "center",
+                      },
+                    ]}
+                  >
+                    <TouchableOpacity
+                      onPress={() => openEditModal(f)}
+                      style={styles.actionBtn}
                     >
-                      <TouchableOpacity
-                        onPress={() => openEditModal(f)}
-                        style={styles.actionBtn}
-                      >
-                        <Ionicons name="create-outline" size={20} color="#2196F3" />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => handleDelete(f.facility_ID)}
-                        style={styles.actionBtn}
-                      >
-                        <Ionicons name="trash-outline" size={20} color="red" />
-                      </TouchableOpacity>
-                    </View>
+                      <Ionicons
+                        name="create-outline"
+                        size={20}
+                        color="#2196F3"
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleDelete(f.facility_ID)}
+                      style={styles.actionBtn}
+                    >
+                      <Ionicons name="trash-outline" size={20} color="red" />
+                    </TouchableOpacity>
                   </View>
-                );
-              })
+                </View>
+              ))
             )}
           </View>
         </ScrollView>
       )}
 
-      {/* Add/Edit Modal */}
+      {/* Modal */}
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalBox, darkMode && styles.modalBoxDark]}>
-            <Text style={[styles.modalTitle, darkMode && styles.textLight]}>
-              {editingFacility ? "Edit Facility" : "Add Facility"}
-            </Text>
+          <ScrollView
+            contentContainerStyle={{
+              flexGrow: 1,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <View style={[styles.modalBox, darkMode && styles.modalBoxDark]}>
+              <Text style={[styles.modalTitle, darkMode && styles.textLight]}>
+                {editingFacility ? "Edit Facility" : "Add Facility"}
+              </Text>
 
-            {/* Facility Name */}
-            <TextInput
-              placeholder="Facility Name"
-              placeholderTextColor={darkMode ? "#aaa" : "#666"}
-              style={[styles.input, darkMode && styles.inputDark]}
-              value={formData.facility_Name}
-              onChangeText={(text) =>
-                setFormData({ ...formData, facility_Name: text })
-              }
-            />
+              <TextInput
+                placeholder="Facility Name"
+                placeholderTextColor={darkMode ? "#aaa" : "#666"}
+                style={[styles.input, darkMode && styles.inputDark]}
+                value={formData.facility_Name}
+                onChangeText={(t) =>
+                  setFormData({ ...formData, facility_Name: t })
+                }
+              />
+              <TextInput
+                placeholder="Category"
+                placeholderTextColor={darkMode ? "#aaa" : "#666"}
+                style={[styles.input, darkMode && styles.inputDark]}
+                value={formData.category}
+                onChangeText={(t) => setFormData({ ...formData, category: t })}
+              />
 
-            {/* Category */}
-            <TextInput
-              placeholder="Category"
-              placeholderTextColor={darkMode ? "#aaa" : "#666"}
-              style={[styles.input, darkMode && styles.inputDark]}
-              value={formData.category}
-              onChangeText={(text) => setFormData({ ...formData, category: text })}
-            />
-
-           {/* Building Dropdown */}
-<View
-  style={[
-    styles.dropdownContainer,
-    darkMode && styles.inputDark,
-    { maxHeight: 150 }, // limit height for scroll
-  ]}
->
-  {loadingBuildings ? (
-    <ActivityIndicator size="small" color={darkMode ? "#fff" : "#000"} />
-  ) : (
-    <ScrollView nestedScrollEnabled>
-      <Picker
-        selectedValue={formData.buildingNo}
-        onValueChange={handleBuildingSelect}
-        style={[styles.dropdown, darkMode && styles.dropdownDark]}
-        dropdownIconColor={darkMode ? "#fff" : "#000"}
-      >
-        <Picker.Item label="Select Building No" value="" />
-        {buildings.map((b) => (
-          <Picker.Item
-            key={b.building_id}
-            label={b.buildingNo}
-            value={b.buildingNo}
-          />
-        ))}
-      </Picker>
-    </ScrollView>
-  )}
-</View>
-
-
-            {/* Latitude & Longitude */}
-            <TextInput
-              placeholder="Latitude"
-              placeholderTextColor={darkMode ? "#aaa" : "#666"}
-              style={[styles.input, darkMode && styles.inputDark]}
-              value={formData.latitude}
-              onChangeText={(text) => setFormData({ ...formData, latitude: text })}
-            />
-            <TextInput
-              placeholder="Longitude"
-              placeholderTextColor={darkMode ? "#aaa" : "#666"}
-              style={[styles.input, darkMode && styles.inputDark]}
-              value={formData.longitude}
-              onChangeText={(text) => setFormData({ ...formData, longitude: text })}
-            />
-
-            {/* Buttons */}
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: "#ccc" }]}
-                onPress={() => setModalVisible(false)}
+              {/* Building Dropdown */}
+              <View
+                style={[styles.dropdownContainer, darkMode && styles.inputDark]}
               >
-                <Text>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtn, { backgroundColor: "#000" }]}
-                onPress={handleSave}
-              >
-                <Text style={{ color: "#fff" }}>Save</Text>
-              </TouchableOpacity>
+                {loadingBuildings ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={darkMode ? "#fff" : "#000"}
+                  />
+                ) : (
+                  <Picker
+                    selectedValue={formData.buildingNo}
+                    onValueChange={handleBuildingSelect}
+                    style={[styles.dropdown, darkMode && styles.dropdownDark]}
+                    dropdownIconColor={darkMode ? "#fff" : "#000"}
+                  >
+                    <Picker.Item label="Select Building No" value="" />
+                    {buildings.map((b) => (
+                      <Picker.Item
+                        key={b.building_id}
+                        label={b.buildingNo}
+                        value={b.buildingNo}
+                      />
+                    ))}
+                  </Picker>
+                )}
+              </View>
+
+              <TextInput
+                placeholder="Floor"
+                placeholderTextColor={darkMode ? "#aaa" : "#666"}
+                style={[styles.input, darkMode && styles.inputDark]}
+                value={formData.floor}
+                onChangeText={(t) => setFormData({ ...formData, floor: t })}
+              />
+              <TextInput
+                placeholder="Description"
+                placeholderTextColor={darkMode ? "#aaa" : "#666"}
+                style={[styles.input, darkMode && styles.inputDark]}
+                multiline
+                numberOfLines={3}
+                value={formData.description}
+                onChangeText={(t) =>
+                  setFormData({ ...formData, description: t })
+                }
+              />
+              <TextInput
+                placeholder="Contact"
+                placeholderTextColor={darkMode ? "#aaa" : "#666"}
+                style={[styles.input, darkMode && styles.inputDark]}
+                value={formData.contact}
+                onChangeText={(t) => setFormData({ ...formData, contact: t })}
+              />
+              <TextInput
+                placeholder="Hours"
+                placeholderTextColor={darkMode ? "#aaa" : "#666"}
+                style={[styles.input, darkMode && styles.inputDark]}
+                value={formData.hours}
+                onChangeText={(t) => setFormData({ ...formData, hours: t })}
+              />
+              <TextInput
+                placeholder="Latitude"
+                placeholderTextColor={darkMode ? "#aaa" : "#666"}
+                style={[styles.input, darkMode && styles.inputDark]}
+                value={formData.latitude}
+                onChangeText={(t) => setFormData({ ...formData, latitude: t })}
+              />
+              <TextInput
+                placeholder="Longitude"
+                placeholderTextColor={darkMode ? "#aaa" : "#666"}
+                style={[styles.input, darkMode && styles.inputDark]}
+                value={formData.longitude}
+                onChangeText={(t) => setFormData({ ...formData, longitude: t })}
+              />
+
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalBtn, { backgroundColor: "#ccc" }]}
+                  onPress={() => setModalVisible(false)}
+                >
+                  <Text>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalBtn, { backgroundColor: "#000" }]}
+                  onPress={handleSave}
+                >
+                  <Text style={{ color: "#fff" }}>Save</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
+          </ScrollView>
         </View>
       </Modal>
     </View>
@@ -408,7 +560,12 @@ const ManageFacilities = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f5", padding: 10, paddingTop: 70 },
+  container: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+    padding: 10,
+    paddingTop: 70,
+  },
   containerDark: { backgroundColor: "#121212" },
   header: {
     flexDirection: "row",
@@ -438,7 +595,7 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     borderRadius: 8,
     overflow: "hidden",
-    minWidth: 850,
+    minWidth: 1250,
     backgroundColor: "#fff",
   },
   tableContainerDark: { borderColor: "#333", backgroundColor: "#1e1e1e" },
@@ -479,7 +636,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.5)",
   },
-  modalBox: { backgroundColor: "#fff", borderRadius: 10, padding: 20, width: "85%" },
+  modalBox: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 20,
+    width: "85%",
+  },
   modalBoxDark: { backgroundColor: "#1e1e1e" },
   modalTitle: { fontSize: 18, fontWeight: "700", marginBottom: 15 },
   input: {
@@ -500,7 +662,12 @@ const styles = StyleSheet.create({
   },
   dropdown: { height: 50, color: "#000" },
   dropdownDark: { backgroundColor: "#333", color: "#fff" },
-  modalButtons: { flexDirection: "row", justifyContent: "flex-end", gap: 10 },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 10,
+    marginTop: 10,
+  },
   modalBtn: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
 });
 

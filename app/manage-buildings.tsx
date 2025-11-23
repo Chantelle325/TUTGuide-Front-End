@@ -1,16 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { useTheme } from "./ThemeContext";
 import API from "./api";
@@ -19,8 +20,13 @@ interface Building {
   building_id: string;
   buildingNo: string;
   building_Name: string;
+  nickname?: string;
+  type?: string;
   latitude?: string;
   longitude?: string;
+  description?: string;
+  contact?: string;
+  hours?: string;
 }
 
 const ManageBuildings = () => {
@@ -33,17 +39,21 @@ const ManageBuildings = () => {
   const [formData, setFormData] = useState({
     buildingNo: "",
     building_Name: "",
+    nickname: "",
+    type: "",
     latitude: "",
     longitude: "",
+    description: "",
+    contact: "",
+    hours: "",
   });
   const [loading, setLoading] = useState(false);
 
-  // ✅ Fetch all buildings
+  // Fetch all buildings
   const fetchBuildings = async () => {
     try {
       setLoading(true);
       const response = await API.get("/buildings/get-All");
-
       if (response.data && Array.isArray(response.data.buildings)) {
         setBuildings(response.data.buildings);
         setFilteredBuildings(response.data.buildings);
@@ -53,7 +63,10 @@ const ManageBuildings = () => {
       }
     } catch (error) {
       console.error("Error fetching buildings:", error);
-      Alert.alert("Error", "Failed to load building data. Please check your connection.");
+      Alert.alert(
+        "Error",
+        "Failed to load building data. Please check your connection."
+      );
     } finally {
       setLoading(false);
     }
@@ -63,7 +76,7 @@ const ManageBuildings = () => {
     fetchBuildings();
   }, []);
 
-  // 🔍 Search Filter
+  // Search Filter
   useEffect(() => {
     const filtered = buildings.filter(
       (b) =>
@@ -75,22 +88,37 @@ const ManageBuildings = () => {
 
   const openAddModal = () => {
     setEditingBuilding(null);
-    setFormData({ buildingNo: "", building_Name: "", latitude: "", longitude: "" });
+    setFormData({
+      buildingNo: "",
+      building_Name: "",
+      nickname: "",
+      type: "",
+      latitude: "",
+      longitude: "",
+      description: "",
+      contact: "",
+      hours: "",
+    });
     setModalVisible(true);
   };
 
   const openEditModal = (building: Building) => {
     setEditingBuilding(building);
     setFormData({
-      buildingNo: building.buildingNo,
-      building_Name: building.building_Name,
+      buildingNo: building.buildingNo || "",
+      building_Name: building.building_Name || "",
+      nickname: building.nickname || "",
+      type: building.type || "",
       latitude: building.latitude || "",
       longitude: building.longitude || "",
+      description: building.description || "",
+      contact: building.contact || "",
+      hours: building.hours || "",
     });
     setModalVisible(true);
   };
 
-  // ✅ Add or Update Building
+  // Add or Update Building
   const handleSave = async () => {
     if (!formData.buildingNo || !formData.building_Name) {
       Alert.alert("Validation", "Building number and name are required.");
@@ -99,43 +127,53 @@ const ManageBuildings = () => {
 
     try {
       if (editingBuilding) {
-        // 🟡 Update existing building
-        const response = await API.put(`/buildings/update/${editingBuilding.building_id}`, formData);
+        const response = await API.put(
+          `/buildings/update/${editingBuilding.building_id}`,
+          formData
+        );
         const updated = response.data?.building || {
           ...editingBuilding,
           ...formData,
         };
-
         setBuildings((prev) =>
-          prev.map((b) => (b.building_id === editingBuilding.building_id ? updated : b))
+          prev.map((b) =>
+            b.building_id === editingBuilding.building_id ? updated : b
+          )
         );
         setFilteredBuildings((prev) =>
-          prev.map((b) => (b.building_id === editingBuilding.building_id ? updated : b))
+          prev.map((b) =>
+            b.building_id === editingBuilding.building_id ? updated : b
+          )
         );
-
         Alert.alert("Success", "Building updated successfully!");
       } else {
-        // 🟢 Add new building
-        const response = await API.post("/buildings/add", formData);
-        const newBuilding = response.data?.building || {
-          building_id: Date.now().toString(),
-          ...formData,
-        };
+        const admin_email = await AsyncStorage.getItem("admin_email");
 
-        setBuildings((prev) => [...prev, newBuilding]);
-        setFilteredBuildings((prev) => [...prev, newBuilding]);
+        const payload = {
+          ...formData,
+          performedByAdmin: admin_email || "",
+        };
+        await API.post("/buildings/add", payload);
 
         Alert.alert("Success", "Building added successfully!");
-      }
+        setBuildings((prev) => [
+          ...prev,
+          { building_id: Date.now().toString(), ...payload },
+        ]);
+        setFilteredBuildings((prev) => [
+          ...prev,
+          { building_id: Date.now().toString(), ...payload },
+        ]);
+        setModalVisible(false);
 
-      setModalVisible(false);
+        return;
+      }
     } catch (error) {
       console.error("Error saving building:", error);
       Alert.alert("Error", "Failed to save building. Please try again.");
     }
   };
 
-  // ✅ Delete Building (instantly updates table + DB)
   const handleDelete = (id: string) => {
     Alert.alert("Confirm Delete", "Delete this building?", [
       { text: "Cancel", style: "cancel" },
@@ -145,10 +183,10 @@ const ManageBuildings = () => {
         onPress: async () => {
           try {
             await API.delete(`/buildings/delete/${id}`);
-
             setBuildings((prev) => prev.filter((b) => b.building_id !== id));
-            setFilteredBuildings((prev) => prev.filter((b) => b.building_id !== id));
-
+            setFilteredBuildings((prev) =>
+              prev.filter((b) => b.building_id !== id)
+            );
             Alert.alert("Deleted", "Building removed successfully!");
           } catch (error) {
             console.error("Delete error:", error);
@@ -163,17 +201,31 @@ const ManageBuildings = () => {
     <View style={[styles.container, darkMode && styles.containerDark]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={28} color={darkMode ? "#fff" : "#000"} />
+          <Ionicons
+            name="arrow-back"
+            size={28}
+            color={darkMode ? "#fff" : "#000"}
+          />
         </TouchableOpacity>
-        <Text style={[styles.title, darkMode && styles.textLight]}>Manage Buildings</Text>
+        <Text style={[styles.title, darkMode && styles.textLight]}>
+          Manage Buildings
+        </Text>
         <TouchableOpacity onPress={openAddModal}>
-          <Ionicons name="add-circle-outline" size={30} color={darkMode ? "#fff" : "#000"} />
+          <Ionicons
+            name="add-circle-outline"
+            size={30}
+            color={darkMode ? "#fff" : "#000"}
+          />
         </TouchableOpacity>
       </View>
 
-      {/* 🔍 Search Bar */}
+      {/* Search Bar */}
       <View style={[styles.searchBar, darkMode && styles.searchBarDark]}>
-        <Ionicons name="search-outline" size={20} color={darkMode ? "#aaa" : "#555"} />
+        <Ionicons
+          name="search-outline"
+          size={20}
+          color={darkMode ? "#aaa" : "#555"}
+        />
         <TextInput
           placeholder="Search by building name or number..."
           placeholderTextColor={darkMode ? "#888" : "#777"}
@@ -184,24 +236,44 @@ const ManageBuildings = () => {
       </View>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#000" style={{ marginTop: 30 }} />
+        <ActivityIndicator
+          size="large"
+          color="#000"
+          style={{ marginTop: 30 }}
+        />
       ) : (
         <ScrollView horizontal showsHorizontalScrollIndicator={true}>
-          <View style={[styles.tableContainer, darkMode && styles.tableContainerDark]}>
+          <View
+            style={[
+              styles.tableContainer,
+              darkMode && styles.tableContainerDark,
+            ]}
+          >
             {/* Header Row */}
             <View style={[styles.tableRow, styles.tableHeader]}>
               <Text style={[styles.cellHeader, { width: 60 }]}>#</Text>
-              <Text style={[styles.cellHeader, { width: 250 }]}>Building Name</Text>
+              <Text style={[styles.cellHeader, { width: 250 }]}>
+                Building Name
+              </Text>
               <Text style={[styles.cellHeader, { width: 150 }]}>Number</Text>
+              <Text style={[styles.cellHeader, { width: 150 }]}>Nickname</Text>
+              <Text style={[styles.cellHeader, { width: 150 }]}>Type</Text>
               <Text style={[styles.cellHeader, { width: 150 }]}>Latitude</Text>
               <Text style={[styles.cellHeader, { width: 150 }]}>Longitude</Text>
+              <Text style={[styles.cellHeader, { width: 150 }]}>
+                Description
+              </Text>
+              <Text style={[styles.cellHeader, { width: 150 }]}>Contact</Text>
+              <Text style={[styles.cellHeader, { width: 150 }]}>Hours</Text>
               <Text style={[styles.cellHeader, { width: 150 }]}>Actions</Text>
             </View>
 
             {/* Data Rows */}
             {filteredBuildings.length === 0 ? (
               <View style={styles.emptyRow}>
-                <Text style={[styles.text, darkMode && styles.textLight]}>No buildings found.</Text>
+                <Text style={[styles.text, darkMode && styles.textLight]}>
+                  No buildings found.
+                </Text>
               </View>
             ) : (
               filteredBuildings.map((b, index) => (
@@ -213,31 +285,120 @@ const ManageBuildings = () => {
                     darkMode && styles.tableRowDark,
                   ]}
                 >
-                  <Text style={[styles.cell, { width: 60 }, darkMode && styles.textLight]}>
+                  <Text
+                    style={[
+                      styles.cell,
+                      { width: 60 },
+                      darkMode && styles.textLight,
+                    ]}
+                  >
                     {index + 1}
                   </Text>
-                  <Text style={[styles.cell, { width: 250 }, darkMode && styles.textLight]}>
+                  <Text
+                    style={[
+                      styles.cell,
+                      { width: 250 },
+                      darkMode && styles.textLight,
+                    ]}
+                  >
                     {b.building_Name}
                   </Text>
-                  <Text style={[styles.cell, { width: 150 }, darkMode && styles.textLight]}>
+                  <Text
+                    style={[
+                      styles.cell,
+                      { width: 150 },
+                      darkMode && styles.textLight,
+                    ]}
+                  >
                     {b.buildingNo}
                   </Text>
-                  <Text style={[styles.cell, { width: 150 }, darkMode && styles.textLight]}>
+                  <Text
+                    style={[
+                      styles.cell,
+                      { width: 150 },
+                      darkMode && styles.textLight,
+                    ]}
+                  >
+                    {b.nickname || "-"}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.cell,
+                      { width: 150 },
+                      darkMode && styles.textLight,
+                    ]}
+                  >
+                    {b.type || "-"}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.cell,
+                      { width: 150 },
+                      darkMode && styles.textLight,
+                    ]}
+                  >
                     {b.latitude || "-"}
                   </Text>
-                  <Text style={[styles.cell, { width: 150 }, darkMode && styles.textLight]}>
+                  <Text
+                    style={[
+                      styles.cell,
+                      { width: 150 },
+                      darkMode && styles.textLight,
+                    ]}
+                  >
                     {b.longitude || "-"}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.cell,
+                      { width: 150 },
+                      darkMode && styles.textLight,
+                    ]}
+                  >
+                    {b.description || "-"}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.cell,
+                      { width: 150 },
+                      darkMode && styles.textLight,
+                    ]}
+                  >
+                    {b.contact || "-"}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.cell,
+                      { width: 150 },
+                      darkMode && styles.textLight,
+                    ]}
+                  >
+                    {b.hours || "-"}
                   </Text>
                   <View
                     style={[
                       styles.cell,
-                      { width: 150, flexDirection: "row", justifyContent: "center" },
+                      {
+                        width: 150,
+                        flexDirection: "row",
+                        justifyContent: "center",
+                      },
                     ]}
                   >
-                    <TouchableOpacity onPress={() => openEditModal(b)} style={styles.actionBtn}>
-                      <Ionicons name="create-outline" size={20} color="#2196F3" />
+                    <TouchableOpacity
+                      onPress={() => openEditModal(b)}
+                      style={styles.actionBtn}
+                    >
+                      <Ionicons
+                        name="create-outline"
+                        size={20}
+                        color="#2196F3"
+                      />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleDelete(b.building_id)} style={styles.actionBtn}>
+                    <TouchableOpacity
+                      onPress={() => handleDelete(b.building_id)}
+                      style={styles.actionBtn}
+                    >
                       <Ionicons name="trash-outline" size={20} color="red" />
                     </TouchableOpacity>
                   </View>
@@ -261,28 +422,77 @@ const ManageBuildings = () => {
               placeholderTextColor={darkMode ? "#aaa" : "#666"}
               style={[styles.input, darkMode && styles.inputDark]}
               value={formData.buildingNo}
-              onChangeText={(text) => setFormData({ ...formData, buildingNo: text })}
+              onChangeText={(text) =>
+                setFormData({ ...formData, buildingNo: text })
+              }
             />
             <TextInput
               placeholder="Building Name"
               placeholderTextColor={darkMode ? "#aaa" : "#666"}
               style={[styles.input, darkMode && styles.inputDark]}
               value={formData.building_Name}
-              onChangeText={(text) => setFormData({ ...formData, building_Name: text })}
+              onChangeText={(text) =>
+                setFormData({ ...formData, building_Name: text })
+              }
+            />
+            <TextInput
+              placeholder="Nickname"
+              placeholderTextColor={darkMode ? "#aaa" : "#666"}
+              style={[styles.input, darkMode && styles.inputDark]}
+              value={formData.nickname}
+              onChangeText={(text) =>
+                setFormData({ ...formData, nickname: text })
+              }
+            />
+            <TextInput
+              placeholder="Type"
+              placeholderTextColor={darkMode ? "#aaa" : "#666"}
+              style={[styles.input, darkMode && styles.inputDark]}
+              value={formData.type}
+              onChangeText={(text) => setFormData({ ...formData, type: text })}
             />
             <TextInput
               placeholder="Latitude"
               placeholderTextColor={darkMode ? "#aaa" : "#666"}
               style={[styles.input, darkMode && styles.inputDark]}
               value={formData.latitude}
-              onChangeText={(text) => setFormData({ ...formData, latitude: text })}
+              onChangeText={(text) =>
+                setFormData({ ...formData, latitude: text })
+              }
             />
             <TextInput
               placeholder="Longitude"
               placeholderTextColor={darkMode ? "#aaa" : "#666"}
               style={[styles.input, darkMode && styles.inputDark]}
               value={formData.longitude}
-              onChangeText={(text) => setFormData({ ...formData, longitude: text })}
+              onChangeText={(text) =>
+                setFormData({ ...formData, longitude: text })
+              }
+            />
+            <TextInput
+              placeholder="Description"
+              placeholderTextColor={darkMode ? "#aaa" : "#666"}
+              style={[styles.input, darkMode && styles.inputDark]}
+              value={formData.description}
+              onChangeText={(text) =>
+                setFormData({ ...formData, description: text })
+              }
+            />
+            <TextInput
+              placeholder="Contact"
+              placeholderTextColor={darkMode ? "#aaa" : "#666"}
+              style={[styles.input, darkMode && styles.inputDark]}
+              value={formData.contact}
+              onChangeText={(text) =>
+                setFormData({ ...formData, contact: text })
+              }
+            />
+            <TextInput
+              placeholder="Hours"
+              placeholderTextColor={darkMode ? "#aaa" : "#666"}
+              style={[styles.input, darkMode && styles.inputDark]}
+              value={formData.hours}
+              onChangeText={(text) => setFormData({ ...formData, hours: text })}
             />
 
             <View style={styles.modalButtons}>
@@ -307,7 +517,12 @@ const ManageBuildings = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f5", padding: 10 ,paddingTop:70,},
+  container: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+    padding: 10,
+    paddingTop: 70,
+  },
   containerDark: { backgroundColor: "#121212" },
   header: {
     flexDirection: "row",
@@ -337,7 +552,7 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     borderRadius: 8,
     overflow: "hidden",
-    minWidth: 800,
+    minWidth: 1200,
     backgroundColor: "#fff",
   },
   tableContainerDark: { borderColor: "#333", backgroundColor: "#1e1e1e" },
@@ -378,7 +593,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.5)",
   },
-  modalBox: { backgroundColor: "#fff", borderRadius: 10, padding: 20, width: "85%" },
+  modalBox: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 20,
+    width: "85%",
+  },
   modalBoxDark: { backgroundColor: "#1e1e1e" },
   modalTitle: { fontSize: 18, fontWeight: "700", marginBottom: 15 },
   input: {
