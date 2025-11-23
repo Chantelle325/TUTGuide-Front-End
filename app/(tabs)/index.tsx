@@ -1,6 +1,7 @@
 import { ThemedText } from "@/components/ThemedText";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import messaging from "@react-native-firebase/messaging";
 import { Stack, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -23,20 +24,58 @@ export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false); // ✅ loading state
+  const [loading, setLoading] = useState(false);
 
+  // -----------------------------------------------------
+  // REQUEST NOTIFICATION PERMISSION + SAVE FCM TOKEN
+  // -----------------------------------------------------
+  const requestNotificationPermission = async (adminEmail: string) => {
+    try {
+      const authStatus = await messaging().requestPermission();
+      const enabled =
+        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+      if (!enabled) {
+        Alert.alert(
+          "Notifications Disabled",
+          "You can enable notifications later in device settings."
+        );
+        return;
+      }
+
+      // Get FCM Token
+      const fcmToken = await messaging().getToken();
+      console.log("FCM Token:", fcmToken);
+
+      // Save token to backend
+      await API.post("/notifications/token", {
+        email: adminEmail,
+        fcmToken,
+      });
+
+      console.log("FCM token saved successfully!");
+    } catch (error) {
+      console.log("FCM Permission Error:", error);
+    }
+  };
+
+  // -----------------------------------------------------
+  // HANDLE LOGIN
+  // -----------------------------------------------------
   const handleSignIn = async () => {
     if (!email.trim()) return Alert.alert("Error", "Please enter your email");
     if (!password) return Alert.alert("Error", "Please enter your password");
 
     try {
-      setLoading(true); // ✅ start loading
+      setLoading(true);
 
       const response = await API.post(`/auth/login`, {
         email: email.trim(),
         password,
       });
-      const { user, token, message } = response.data;
+
+      const { user, token } = response.data;
 
       if (!user || !user.role || !token) {
         Alert.alert("Error", "Invalid credentials or token missing");
@@ -44,18 +83,37 @@ export default function LoginScreen() {
         return;
       }
 
+      // Save session data
       await AsyncStorage.setItem("userToken", token);
       await AsyncStorage.setItem("userRole", user.role);
       await AsyncStorage.setItem(
         "userName",
         user.fullName || user.email.split("@")[0]
       );
-
-      // new line
       await AsyncStorage.setItem("admin_email", user.email);
 
+      // -------------------------------------------
+      // If admin, ask notification permission popup
+      // -------------------------------------------
       if (user.role === "admin") {
-        router.replace("/admin");
+        Alert.alert(
+          "Enable Notifications",
+          "Do you want to allow notifications for admin alerts?",
+          [
+            {
+              text: "No",
+              style: "cancel",
+              onPress: () => router.replace("/admin"),
+            },
+            {
+              text: "Allow",
+              onPress: async () => {
+                await requestNotificationPermission(user.email);
+                router.replace("/admin");
+              },
+            },
+          ]
+        );
       } else {
         router.replace("/signin");
       }
@@ -66,7 +124,7 @@ export default function LoginScreen() {
         err.response?.data?.message || "Invalid credentials"
       );
     } finally {
-      setLoading(false); // ✅ stop loading in all cases
+      setLoading(false);
     }
   };
 

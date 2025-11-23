@@ -54,6 +54,7 @@ const ManageBuildings = () => {
     try {
       setLoading(true);
       const response = await API.get("/buildings/get-All");
+      console.log("Response from backend:", response.data);
       if (response.data && Array.isArray(response.data.buildings)) {
         setBuildings(response.data.buildings);
         setFilteredBuildings(response.data.buildings);
@@ -242,170 +243,182 @@ const ManageBuildings = () => {
           style={{ marginTop: 30 }}
         />
       ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={true}>
-          <View
-            style={[
-              styles.tableContainer,
-              darkMode && styles.tableContainerDark,
-            ]}
-          >
-            {/* Header Row */}
-            <View style={[styles.tableRow, styles.tableHeader]}>
-              <Text style={[styles.cellHeader, { width: 60 }]}>#</Text>
-              <Text style={[styles.cellHeader, { width: 250 }]}>
-                Building Name
-              </Text>
-              <Text style={[styles.cellHeader, { width: 150 }]}>Number</Text>
-              <Text style={[styles.cellHeader, { width: 150 }]}>Nickname</Text>
-              <Text style={[styles.cellHeader, { width: 150 }]}>Type</Text>
-              <Text style={[styles.cellHeader, { width: 150 }]}>Latitude</Text>
-              <Text style={[styles.cellHeader, { width: 150 }]}>Longitude</Text>
-              <Text style={[styles.cellHeader, { width: 150 }]}>
-                Description
-              </Text>
-              <Text style={[styles.cellHeader, { width: 150 }]}>Contact</Text>
-              <Text style={[styles.cellHeader, { width: 150 }]}>Hours</Text>
-              <Text style={[styles.cellHeader, { width: 150 }]}>Actions</Text>
-            </View>
-
-            {/* Data Rows */}
-            {filteredBuildings.length === 0 ? (
-              <View style={styles.emptyRow}>
-                <Text style={[styles.text, darkMode && styles.textLight]}>
-                  No buildings found.
+        <ScrollView
+          style={{ flex: 1 }}
+          horizontal
+          showsHorizontalScrollIndicator={true}
+        >
+          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={true}>
+            <View
+              style={[
+                styles.tableContainer,
+                darkMode && styles.tableContainerDark,
+              ]}
+            >
+              {/* Header Row */}
+              <View style={[styles.tableRow, styles.tableHeader]}>
+                <Text style={[styles.cellHeader, { width: 60 }]}>#</Text>
+                <Text style={[styles.cellHeader, { width: 250 }]}>
+                  Building Name
                 </Text>
+                <Text style={[styles.cellHeader, { width: 150 }]}>Number</Text>
+                <Text style={[styles.cellHeader, { width: 150 }]}>
+                  Nickname
+                </Text>
+                <Text style={[styles.cellHeader, { width: 150 }]}>Type</Text>
+                <Text style={[styles.cellHeader, { width: 150 }]}>
+                  Latitude
+                </Text>
+                <Text style={[styles.cellHeader, { width: 150 }]}>
+                  Longitude
+                </Text>
+                <Text style={[styles.cellHeader, { width: 150 }]}>
+                  Description
+                </Text>
+                <Text style={[styles.cellHeader, { width: 150 }]}>Contact</Text>
+                <Text style={[styles.cellHeader, { width: 150 }]}>Hours</Text>
+                <Text style={[styles.cellHeader, { width: 150 }]}>Actions</Text>
               </View>
-            ) : (
-              filteredBuildings.map((b, index) => (
-                <View
-                  key={b.building_id}
-                  style={[
-                    styles.tableRow,
-                    index % 2 === 0 ? styles.rowEven : styles.rowOdd,
-                    darkMode && styles.tableRowDark,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.cell,
-                      { width: 60 },
-                      darkMode && styles.textLight,
-                    ]}
-                  >
-                    {index + 1}
+
+              {/* Data Rows */}
+              {filteredBuildings.length === 0 ? (
+                <View style={styles.emptyRow}>
+                  <Text style={[styles.text, darkMode && styles.textLight]}>
+                    No buildings found.
                   </Text>
-                  <Text
-                    style={[
-                      styles.cell,
-                      { width: 250 },
-                      darkMode && styles.textLight,
-                    ]}
-                  >
-                    {b.building_Name}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.cell,
-                      { width: 150 },
-                      darkMode && styles.textLight,
-                    ]}
-                  >
-                    {b.buildingNo}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.cell,
-                      { width: 150 },
-                      darkMode && styles.textLight,
-                    ]}
-                  >
-                    {b.nickname || "-"}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.cell,
-                      { width: 150 },
-                      darkMode && styles.textLight,
-                    ]}
-                  >
-                    {b.type || "-"}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.cell,
-                      { width: 150 },
-                      darkMode && styles.textLight,
-                    ]}
-                  >
-                    {b.latitude || "-"}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.cell,
-                      { width: 150 },
-                      darkMode && styles.textLight,
-                    ]}
-                  >
-                    {b.longitude || "-"}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.cell,
-                      { width: 150 },
-                      darkMode && styles.textLight,
-                    ]}
-                  >
-                    {b.description || "-"}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.cell,
-                      { width: 150 },
-                      darkMode && styles.textLight,
-                    ]}
-                  >
-                    {b.contact || "-"}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.cell,
-                      { width: 150 },
-                      darkMode && styles.textLight,
-                    ]}
-                  >
-                    {b.hours || "-"}
-                  </Text>
-                  <View
-                    style={[
-                      styles.cell,
-                      {
-                        width: 150,
-                        flexDirection: "row",
-                        justifyContent: "center",
-                      },
-                    ]}
-                  >
-                    <TouchableOpacity
-                      onPress={() => openEditModal(b)}
-                      style={styles.actionBtn}
-                    >
-                      <Ionicons
-                        name="create-outline"
-                        size={20}
-                        color="#2196F3"
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => handleDelete(b.building_id)}
-                      style={styles.actionBtn}
-                    >
-                      <Ionicons name="trash-outline" size={20} color="red" />
-                    </TouchableOpacity>
-                  </View>
                 </View>
-              ))
-            )}
-          </View>
+              ) : (
+                filteredBuildings.map((b, index) => (
+                  <View
+                    key={b.building_id}
+                    style={[
+                      styles.tableRow,
+                      index % 2 === 0 ? styles.rowEven : styles.rowOdd,
+                      darkMode && styles.tableRowDark,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.cell,
+                        { width: 60 },
+                        darkMode && styles.textLight,
+                      ]}
+                    >
+                      {index + 1}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.cell,
+                        { width: 250 },
+                        darkMode && styles.textLight,
+                      ]}
+                    >
+                      {b.building_Name}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.cell,
+                        { width: 150 },
+                        darkMode && styles.textLight,
+                      ]}
+                    >
+                      {b.buildingNo}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.cell,
+                        { width: 150 },
+                        darkMode && styles.textLight,
+                      ]}
+                    >
+                      {b.nickname || "-"}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.cell,
+                        { width: 150 },
+                        darkMode && styles.textLight,
+                      ]}
+                    >
+                      {b.type || "-"}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.cell,
+                        { width: 150 },
+                        darkMode && styles.textLight,
+                      ]}
+                    >
+                      {b.latitude || "-"}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.cell,
+                        { width: 150 },
+                        darkMode && styles.textLight,
+                      ]}
+                    >
+                      {b.longitude || "-"}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.cell,
+                        { width: 150 },
+                        darkMode && styles.textLight,
+                      ]}
+                    >
+                      {b.description || "-"}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.cell,
+                        { width: 150 },
+                        darkMode && styles.textLight,
+                      ]}
+                    >
+                      {b.contact || "-"}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.cell,
+                        { width: 150 },
+                        darkMode && styles.textLight,
+                      ]}
+                    >
+                      {b.hours || "-"}
+                    </Text>
+                    <View
+                      style={[
+                        styles.cell,
+                        {
+                          width: 150,
+                          flexDirection: "row",
+                          justifyContent: "center",
+                        },
+                      ]}
+                    >
+                      <TouchableOpacity
+                        onPress={() => openEditModal(b)}
+                        style={styles.actionBtn}
+                      >
+                        <Ionicons
+                          name="create-outline"
+                          size={20}
+                          color="#2196F3"
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => handleDelete(b.building_id)}
+                        style={styles.actionBtn}
+                      >
+                        <Ionicons name="trash-outline" size={20} color="red" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))
+              )}
+            </View>
+          </ScrollView>
         </ScrollView>
       )}
 

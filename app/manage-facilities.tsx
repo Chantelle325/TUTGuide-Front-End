@@ -595,7 +595,7 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     borderRadius: 8,
     overflow: "hidden",
-    minWidth: 1250,
+    minWidth: 850,
     backgroundColor: "#fff",
   },
   tableContainerDark: { borderColor: "#333", backgroundColor: "#1e1e1e" },
@@ -662,12 +662,7 @@ const styles = StyleSheet.create({
   },
   dropdown: { height: 50, color: "#000" },
   dropdownDark: { backgroundColor: "#333", color: "#fff" },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    gap: 10,
-    marginTop: 10,
-  },
+  modalButtons: { flexDirection: "row", justifyContent: "flex-end", gap: 10 },
   modalBtn: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 },
 });
 
