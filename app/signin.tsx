@@ -31,7 +31,7 @@ export default function DashboardScreen() {
   const [drawerAnim] = useState(new Animated.Value(-DRAWER_WIDTH));
   const [savedPlaces, setSavedPlaces] = useState<LocationType[]>([]);
   // const [webViewUrl, setWebViewUrl] = useState<string>('https://map-tut.vercel.app/');
-  const [webViewUrl, setWebViewUrl] = useState<string>('https://tutguide.netlify.app/'); // default web app
+  const [webViewUrl, setWebViewUrl] = useState<string>('http://168.172.187.190:8082/'); // default web app
 
   const toggleDrawer = () => {
     if (drawerOpen) {
@@ -55,7 +55,6 @@ export default function DashboardScreen() {
   }, []);
 
 // In your Expo app
-const [webViewUrl, setWebViewUrl] = useState<string>('http://168.172.185.27:8085/');
 const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
 
 useEffect(() => {
@@ -72,7 +71,7 @@ useEffect(() => {
         setCurrentLocation({ lat: latitude, lng: longitude });
         
         // Update WebView URL with coordinates
-        const url = `http://168.172.185.27:8085/?lat=${latitude}&lng=${longitude}`;
+        const url = `http://168.172.187.190:8082/?lat=${latitude}&lng=${longitude}`;
         setWebViewUrl(url);
       }
     );
@@ -142,7 +141,7 @@ useEffect(() => {
 
         {/* Footer Tabs */}
         <View style={styles.footer}>
-          <TouchableOpacity style={[styles.tab, styles.activeTab]} onPress={() => setWebViewUrl('https://tutguide.netlify.app/')}>
+          <TouchableOpacity style={[styles.tab, styles.activeTab]} onPress={() => setWebViewUrl('http://168.172.187.190:8082/')}>
             <View style={styles.tabContent}>
               <Feather name="home" size={24} color="#9fc3c3" />
               <ThemedText style={[styles.tabText, styles.activeTabText]}>Home</ThemedText>
@@ -181,7 +180,7 @@ const styles = StyleSheet.create({
   },
   searchContainer: { position: 'absolute', top: 65, left: 55, right: 15, zIndex: 10 },
   searchInput: {width: '100%',padding: 14,borderWidth: 1,borderColor: '#ccc',borderRadius: 25,backgroundColor: '#fff',fontSize: 15,color: '#222',shadowColor: '#000',shadowOpacity: 0.1,shadowRadius: 3,elevation: 4,},
-  footer: {position: 'absolute',bottom: 0,left: 0,right: 0,flexDirection: 'row',justifyContent: 'space-around',paddingVertical: 5,borderTopWidth: 2,borderTopColor: '#eee',backgroundColor: 'white',},
+  //footer: {position: 'absolute',bottom: 0,left: 0,right: 0,flexDirection: 'row',justifyContent: 'space-around',paddingVertical: 5,borderTopWidth: 2,borderTopColor: '#eee',backgroundColor: 'white',},
   tab: { alignItems: 'center', padding: 10, flex: 1 },
   activeTab: { borderBottomWidth: 3, borderBottomColor: 'black' },
   tabContent: { alignItems: 'center' },
@@ -211,13 +210,13 @@ const styles = StyleSheet.create({
   drawerProfileImage: { width: 80, height: 80, borderRadius: 40, marginBottom: 10 },
   drawerName: { fontSize: 18, fontWeight: '700', color: '#2e4b6d' },
   drawerItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#ccc' },
-  drawer: {position: 'absolute',left: 0,top: 0,width: DRAWER_WIDTH,height: '100%',backgroundColor: '#f5f5f5',paddingTop: 40,paddingHorizontal: 20,zIndex: 20,},
-  drawerOverlay: {position: 'absolute',left: 0,top: 0,width: '100%',height: '100%',backgroundColor: 'rgba(0,0,0,0.3)',zIndex: 15,},
-  drawerHeader: {alignItems: 'center',marginBottom: 30,},
-  drawerProfileImage: {width: 80,height: 80,borderRadius: 40,marginBottom: 10,},
-  drawerName: {fontSize: 18,fontWeight: '700',color: '#2e4b6d'},
-  drawerItem: {flexDirection: 'row',alignItems: 'center',paddingVertical: 12,borderBottomWidth: 1,borderBottomColor: '#ccc',},
+  //drawer: {position: 'absolute',left: 0,top: 0,width: DRAWER_WIDTH,height: '100%',backgroundColor: '#f5f5f5',paddingTop: 40,paddingHorizontal: 20,zIndex: 20,},
+  //drawerOverlay: {position: 'absolute',left: 0,top: 0,width: '100%',height: '100%',backgroundColor: 'rgba(0,0,0,0.3)',zIndex: 15,},
+  //drawerHeader: {alignItems: 'center',marginBottom: 30,},
+  //drawerProfileImage: {width: 80,height: 80,borderRadius: 40,marginBottom: 10,},
+  //drawerName: {fontSize: 18,fontWeight: '700',color: '#2e4b6d'},
+  //drawerItem: {flexDirection: 'row',alignItems: 'center',paddingVertical: 12,borderBottomWidth: 1,borderBottomColor: '#ccc',},
   closeButton: { position: 'absolute', right: 0, top: 0, padding: 10 },
   savedPlacesTitle: { fontSize: 16, fontWeight: '700', color: '#2e4b6d', marginTop: 20, marginBottom: 10 },
-  savedPlacesTitle: {fontSize: 16,fontWeight: '700',color: '#2e4b6d',marginTop: 20,marginBottom: 10, },
+  //savedPlacesTitle: {fontSize: 16,fontWeight: '700',color: '#2e4b6d',marginTop: 20,marginBottom: 10, },
 });
