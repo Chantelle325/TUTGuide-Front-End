@@ -431,130 +431,136 @@ const ManageFacilities = () => {
       )}
 
       {/* Modal */}
-      <Modal visible={modalVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <ScrollView
-            contentContainerStyle={{
-              flexGrow: 1,
-              justifyContent: "center",
-              alignItems: "center",
-            }}
-          >
-            <View style={[styles.modalBox, darkMode && styles.modalBoxDark]}>
-              <Text style={[styles.modalTitle, darkMode && styles.textLight]}>
-                {editingFacility ? "Edit Facility" : "Add Facility"}
-              </Text>
+      {/* Modal (Matches Add Building UI) */}
+<Modal visible={modalVisible} transparent animationType="slide">
+  <View style={styles.modalOverlay}>
+    <ScrollView
+      contentContainerStyle={{
+        flexGrow: 1,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <View style={[styles.modalBox, darkMode && styles.modalBoxDark]}>
+        <Text style={[styles.modalTitle, darkMode && styles.textLight]}>
+          {editingFacility ? "Edit Facility" : "Add Facility"}
+        </Text>
 
-              <TextInput
-                placeholder="Facility Name"
-                placeholderTextColor={darkMode ? "#aaa" : "#666"}
-                style={[styles.input, darkMode && styles.inputDark]}
-                value={formData.facility_Name}
-                onChangeText={(t) =>
-                  setFormData({ ...formData, facility_Name: t })
-                }
-              />
-              <TextInput
-                placeholder="Category"
-                placeholderTextColor={darkMode ? "#aaa" : "#666"}
-                style={[styles.input, darkMode && styles.inputDark]}
-                value={formData.category}
-                onChangeText={(t) => setFormData({ ...formData, category: t })}
-              />
+        <TextInput
+          placeholder="Facility Name"
+          placeholderTextColor={darkMode ? "#aaa" : "#666"}
+          style={[styles.input, darkMode && styles.inputDark]}
+          value={formData.facility_Name}
+          onChangeText={(t) =>
+            setFormData({ ...formData, facility_Name: t })
+          }
+        />
+        <TextInput
+          placeholder="Category"
+          placeholderTextColor={darkMode ? "#aaa" : "#666"}
+          style={[styles.input, darkMode && styles.inputDark]}
+          value={formData.category}
+          onChangeText={(t) => setFormData({ ...formData, category: t })}
+        />
 
-              {/* Building Dropdown */}
-              <View
-                style={[styles.dropdownContainer, darkMode && styles.inputDark]}
-              >
-                {loadingBuildings ? (
-                  <ActivityIndicator
-                    size="small"
-                    color={darkMode ? "#fff" : "#000"}
-                  />
-                ) : (
-                  <Picker
-                    selectedValue={formData.buildingNo}
-                    onValueChange={handleBuildingSelect}
-                    style={[styles.dropdown, darkMode && styles.dropdownDark]}
-                    dropdownIconColor={darkMode ? "#fff" : "#000"}
-                  >
-                    <Picker.Item label="Select Building No" value="" />
-                    {buildings.map((b) => (
-                      <Picker.Item
-                        key={b.building_id}
-                        label={b.buildingNo}
-                        value={b.buildingNo}
-                      />
-                    ))}
-                  </Picker>
-                )}
-              </View>
-
-              <TextInput
-                placeholder="Floor"
-                placeholderTextColor={darkMode ? "#aaa" : "#666"}
-                style={[styles.input, darkMode && styles.inputDark]}
-                value={formData.floor}
-                onChangeText={(t) => setFormData({ ...formData, floor: t })}
-              />
-              <TextInput
-                placeholder="Description"
-                placeholderTextColor={darkMode ? "#aaa" : "#666"}
-                style={[styles.input, darkMode && styles.inputDark]}
-                multiline
-                numberOfLines={3}
-                value={formData.description}
-                onChangeText={(t) =>
-                  setFormData({ ...formData, description: t })
-                }
-              />
-              <TextInput
-                placeholder="Contact"
-                placeholderTextColor={darkMode ? "#aaa" : "#666"}
-                style={[styles.input, darkMode && styles.inputDark]}
-                value={formData.contact}
-                onChangeText={(t) => setFormData({ ...formData, contact: t })}
-              />
-              <TextInput
-                placeholder="Hours"
-                placeholderTextColor={darkMode ? "#aaa" : "#666"}
-                style={[styles.input, darkMode && styles.inputDark]}
-                value={formData.hours}
-                onChangeText={(t) => setFormData({ ...formData, hours: t })}
-              />
-              <TextInput
-                placeholder="Latitude"
-                placeholderTextColor={darkMode ? "#aaa" : "#666"}
-                style={[styles.input, darkMode && styles.inputDark]}
-                value={formData.latitude}
-                onChangeText={(t) => setFormData({ ...formData, latitude: t })}
-              />
-              <TextInput
-                placeholder="Longitude"
-                placeholderTextColor={darkMode ? "#aaa" : "#666"}
-                style={[styles.input, darkMode && styles.inputDark]}
-                value={formData.longitude}
-                onChangeText={(t) => setFormData({ ...formData, longitude: t })}
-              />
-
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={[styles.modalBtn, { backgroundColor: "#ccc" }]}
-                  onPress={() => setModalVisible(false)}
-                >
-                  <Text>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modalBtn, { backgroundColor: "#000" }]}
-                  onPress={handleSave}
-                >
-                  <Text style={{ color: "#fff" }}>Save</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </ScrollView>
+        {/* Building Dropdown */}
+        <View style={[styles.dropdownContainer,
+           darkMode && styles.inputDark,
+           { maxHeight: 150 },
+           ]}
+           >
+          {loadingBuildings ? (
+            <ActivityIndicator
+              size="small"
+              color={darkMode ? "#fff" : "#000"}
+            />
+          ) : (
+            <ScrollView nestedScrollEnabled>
+            <Picker
+              selectedValue={formData.buildingNo}
+              onValueChange={handleBuildingSelect}
+              style={[styles.dropdown, darkMode && styles.dropdownDark]}
+              dropdownIconColor={darkMode ? "#fff" : "#000"}
+            >
+              <Picker.Item label="Select Building No" value="" />
+              {buildings.map((b) => (
+                <Picker.Item
+                  key={b.building_id}
+                  label={b.buildingNo}
+                  value={b.buildingNo}
+                />
+              ))}
+            </Picker>
+            </ScrollView>
+          )}
         </View>
-      </Modal>
+
+        <TextInput
+          placeholder="Floor"
+          placeholderTextColor={darkMode ? "#aaa" : "#666"}
+          style={[styles.input, darkMode && styles.inputDark]}
+          value={formData.floor}
+          onChangeText={(t) => setFormData({ ...formData, floor: t })}
+        />
+        <TextInput
+          placeholder="Description"
+          placeholderTextColor={darkMode ? "#aaa" : "#666"}
+          style={[styles.input, darkMode && styles.inputDark]}
+          multiline
+          numberOfLines={3}
+          value={formData.description}
+          onChangeText={(t) =>
+            setFormData({ ...formData, description: t })
+          }
+        />
+        <TextInput
+          placeholder="Contact"
+          placeholderTextColor={darkMode ? "#aaa" : "#666"}
+          style={[styles.input, darkMode && styles.inputDark]}
+          value={formData.contact}
+          onChangeText={(t) => setFormData({ ...formData, contact: t })}
+        />
+        <TextInput
+          placeholder="Hours"
+          placeholderTextColor={darkMode ? "#aaa" : "#666"}
+          style={[styles.input, darkMode && styles.inputDark]}
+          value={formData.hours}
+          onChangeText={(t) => setFormData({ ...formData, hours: t })}
+        />
+        <TextInput
+          placeholder="Latitude"
+          placeholderTextColor={darkMode ? "#aaa" : "#666"}
+          style={[styles.input, darkMode && styles.inputDark]}
+          value={formData.latitude}
+          onChangeText={(t) => setFormData({ ...formData, latitude: t })}
+        />
+        <TextInput
+          placeholder="Longitude"
+          placeholderTextColor={darkMode ? "#aaa" : "#666"}
+          style={[styles.input, darkMode && styles.inputDark]}
+          value={formData.longitude}
+          onChangeText={(t) => setFormData({ ...formData, longitude: t })}
+        />
+
+        <View style={styles.modalButtons}>
+          <TouchableOpacity
+            style={[styles.modalBtn, { backgroundColor: "#ccc" }]}
+            onPress={() => setModalVisible(false)}
+          >
+            <Text>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.modalBtn, { backgroundColor: "#000" }]}
+            onPress={handleSave}
+          >
+            <Text style={{ color: "#fff" }}>Save</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </ScrollView>
+  </View>
+</Modal>
+
     </View>
   );
 };
@@ -639,8 +645,8 @@ const styles = StyleSheet.create({
   modalBox: {
     backgroundColor: "#fff",
     borderRadius: 10,
-    padding: 20,
-    width: "85%",
+    padding: 25,
+    width: "100%",
   },
   modalBoxDark: { backgroundColor: "#1e1e1e" },
   modalTitle: { fontSize: 18, fontWeight: "700", marginBottom: 15 },

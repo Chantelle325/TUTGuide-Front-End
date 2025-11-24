@@ -1,128 +1,106 @@
-import { ThemedText } from "@/components/ThemedText";
-import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import messaging from "@react-native-firebase/messaging";
-import { Stack, useRouter } from "expo-router";
-import React, { useState } from "react";
+import { ThemedText } from '@/components/ThemedText';
+import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import messaging from '@react-native-firebase/messaging';
+import { Stack, useRouter } from 'expo-router';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Image,
   KeyboardAvoidingView,
+  PermissionsAndroid,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-} from "react-native";
-import API from "../api";
+  View
+} from 'react-native';
+import API from '../api';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // -----------------------------------------------------
-  // REQUEST NOTIFICATION PERMISSION + SAVE FCM TOKEN
-  // -----------------------------------------------------
-  const requestNotificationPermission = async (adminEmail: string) => {
-    try {
-      const authStatus = await messaging().requestPermission();
-      const enabled =
-        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+  // 🔹 Request notification permission and get FCM token
+  const requestFCMToken = async (): Promise<string | null> => {
+    let hasPermission = false;
 
-      if (!enabled) {
-        Alert.alert(
-          "Notifications Disabled",
-          "You can enable notifications later in device settings."
-        );
-        return;
+    try {
+      if (Platform.OS === 'ios' || (Platform.OS === 'android' && Platform.Version < 33)) {
+        const authStatus = await messaging().requestPermission();
+        hasPermission =
+          authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+          authStatus === messaging.AuthorizationStatus.PROVISIONAL;
       }
 
-      // Get FCM Token
-      const fcmToken = await messaging().getToken();
-      console.log("FCM Token:", fcmToken);
+      if (Platform.OS === 'android' && Platform.Version >= 33) {
+        const result = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+        );
+        hasPermission = result === PermissionsAndroid.RESULTS.GRANTED;
+      }
 
-      // Save token to backend
-      await API.post("/notifications/token", {
-        email: adminEmail,
-        fcmToken,
-      });
+      if (!hasPermission) {
+        console.log('Notifications permission denied');
+        return null;
+      }
 
-      console.log("FCM token saved successfully!");
-    } catch (error) {
-      console.log("FCM Permission Error:", error);
+      const token = await messaging().getToken();
+      console.log('FCM Token:', token);
+      return token;
+    } catch (err) {
+      console.error('Failed to get FCM token:', err);
+      return null;
     }
   };
 
-  // -----------------------------------------------------
-  // HANDLE LOGIN
-  // -----------------------------------------------------
   const handleSignIn = async () => {
-    if (!email.trim()) return Alert.alert("Error", "Please enter your email");
-    if (!password) return Alert.alert("Error", "Please enter your password");
+    if (!email.trim()) return Alert.alert('Error', 'Please enter your email');
+    if (!password) return Alert.alert('Error', 'Please enter your password');
 
     try {
       setLoading(true);
 
-      const response = await API.post(`/auth/login`, {
-        email: email.trim(),
-        password,
-      });
-
+      const response = await API.post(`/auth/login`, { email: email.trim(), password });
       const { user, token } = response.data;
 
       if (!user || !user.role || !token) {
-        Alert.alert("Error", "Invalid credentials or token missing");
+        Alert.alert('Error', 'Invalid credentials or token missing');
         setLoading(false);
         return;
       }
 
-      // Save session data
-      await AsyncStorage.setItem("userToken", token);
-      await AsyncStorage.setItem("userRole", user.role);
-      await AsyncStorage.setItem(
-        "userName",
-        user.fullName || user.email.split("@")[0]
-      );
-      await AsyncStorage.setItem("admin_email", user.email);
+      // Save basic user info
+      await AsyncStorage.setItem('userToken', token);
+      await AsyncStorage.setItem('userRole', user.role);
+      await AsyncStorage.setItem('userName', user.fullName || user.email.split('@')[0]);
+      await AsyncStorage.setItem('admin_email', user.email);
 
-      // -------------------------------------------
-      // If admin, ask notification permission popup
-      // -------------------------------------------
-      if (user.role === "admin") {
-        Alert.alert(
-          "Enable Notifications",
-          "Do you want to allow notifications for admin alerts?",
-          [
-            {
-              text: "No",
-              style: "cancel",
-              onPress: () => router.replace("/admin"),
-            },
-            {
-              text: "Allow",
-              onPress: async () => {
-                await requestNotificationPermission(user.email);
-                router.replace("/admin");
-              },
-            },
-          ]
-        );
+      // If admin, request notification permission and register FCM token
+      if (user.role === 'admin') {
+        const fcmToken = await requestFCMToken();
+        if (fcmToken) {
+          await API.post('/notifications/token', {
+            admin_email: user.email,
+            fcmToken,
+            allowNotifications: true, // toggle ON automatically
+          });
+        }
+
+        router.replace('/admin');
       } else {
-        router.replace("/signin");
+        router.replace('/signin');
       }
+
     } catch (err: any) {
-      console.log("Login error:", err.response?.data || err.message);
-      Alert.alert(
-        "Error",
-        err.response?.data?.message || "Invalid credentials"
-      );
+      console.log('Login error:', err.response?.data || err.message);
+      Alert.alert('Error', err.response?.data?.message || 'Invalid credentials');
     } finally {
       setLoading(false);
     }
@@ -133,17 +111,17 @@ export default function LoginScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <KeyboardAvoidingView
-        style={{ flex: 1, backgroundColor: "#2b2a2aff" }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1, backgroundColor: '#2b2a2aff' }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             <View style={styles.logoCircle}>
               <Image
-                source={require("@/assets/images/tutguide3.png")}
+                source={require('@/assets/images/tutguide3.png')}
                 style={styles.logoImage}
                 resizeMode="contain"
-              />
+              /> 
             </View>
           </View>
         </View>
@@ -151,12 +129,10 @@ export default function LoginScreen() {
         <View style={styles.contentContainer}>
           <ScrollView
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ padding: 20, minHeight: "100%" }}
+            contentContainerStyle={{ padding: 20, minHeight: '100%' }}
             showsVerticalScrollIndicator={false}
           >
-            <ThemedText style={styles.title}>
-              Navigate Life's path with TUTGuide
-            </ThemedText>
+            <ThemedText style={styles.title}>Navigate Life's path with TUTGuide</ThemedText>
 
             {/* FORM CONTAINER */}
             <View style={styles.formContainer}>
@@ -186,25 +162,16 @@ export default function LoginScreen() {
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
                   />
-                  <TouchableOpacity
-                    onPress={() => setShowPassword(!showPassword)}
-                  >
-                    <Ionicons
-                      name={showPassword ? "eye" : "eye-off"}
-                      size={22}
-                      color="#666"
-                    />
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                    <Ionicons name={showPassword ? "eye" : "eye-off"} size={22} color="#666" />
                   </TouchableOpacity>
                 </View>
               </View>
 
-              {/* FORGOT PASSWORD */}
-              <ThemedText
-                onPress={() => router.push("/forgot-password")}
-                style={styles.linkText}
-              >
-                Forgot Password?
-              </ThemedText>
+               {/* FORGOT PASSWORD */}
+              <TouchableOpacity onPress={() => router.push('/forgot-password')}>
+              <ThemedText style={styles.linkText}>Forgot Password?</ThemedText>
+              </TouchableOpacity>
 
               {/* LOGIN BUTTON */}
               <TouchableOpacity
@@ -223,16 +190,13 @@ export default function LoginScreen() {
 
               {/* SIGN UP LINK */}
               <View style={styles.bottomTextContainer}>
-                <Text style={styles.bottomText}>
-                  Don't have an account?{" "}
-                  <Text
-                    style={styles.signUpText}
-                    onPress={() => router.push("/signup")}
-                  >
-                    Sign Up
-                  </Text>
-                </Text>
+                <Text style={styles.bottomText}>Don't have an account?</Text>
+
+                <TouchableOpacity onPress={() => router.push('/signup')}>
+                  <Text style={styles.signUpText}>Sign Up</Text>
+                </TouchableOpacity>
               </View>
+
             </View>
           </ScrollView>
         </View>
@@ -243,110 +207,47 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: "#2b2a2aff",
-    width: "100%",
-    paddingTop: Platform.OS === "ios" ? 60 : 90,
+    backgroundColor: '#2b2a2aff',
+    width: '100%',
+    paddingTop: Platform.OS === 'ios' ? 60 : 90,
     paddingBottom: 75,
-    alignItems: "center",
-    justifyContent: "center",
-    position: "relative",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  logoContainer: { flexDirection: "row", alignItems: "center" },
+  logoContainer: { flexDirection: 'row', alignItems: 'center' },
   logoCircle: {
     width: 80,
     height: 80,
     borderRadius: 50,
-    backgroundColor: "#fff",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12
   },
-  logoImage: {
-    width: 80, // larger than circle, will zoom in
-    height: 80, // larger than circle
-    borderRadius: 40, // optional: makes image circular
-    resizeMode: "cover", // fills the circle area
-  },
-  logoTextMain: { fontSize: 24, fontWeight: "bold", color: "#fff" },
+  logoImage: { width: 80, height: 80, borderRadius: 40, resizeMode: 'cover' },
   contentContainer: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: '#f5f5f5',
     borderTopLeftRadius: 60,
-    overflow: "hidden",
+    overflow: 'hidden',
     marginTop: -20,
   },
-  title: {
-    fontSize: 18,
-    color: "#000",
-    textAlign: "center",
-    marginBottom: 30,
-    fontWeight: "500",
-    marginTop: 40,
-    fontFamily: "Montserrat",
-    textDecorationLine: "underline",
-  },
-  formContainer: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 15,
-    padding: 20,
-    backgroundColor: "#fff",
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  inputBlock: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    color: "#333",
-    fontWeight: "600",
-    marginBottom: 6,
-  },
-  inputField: {
-    fontSize: 16,
-    color: "#000",
-    backgroundColor: "#fff",
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#ccc",
-  },
-  inputRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    paddingHorizontal: 10,
-  },
-  passwordInput: {
-    flex: 1,
-    fontSize: 16,
-    color: "#000",
-    paddingVertical: 12,
-    paddingHorizontal: 4,
-  },
+  title: { fontSize: 18, color: '#000', textAlign: 'center', marginBottom: 30, fontWeight: '500', marginTop: 40 },
+  formContainer: { borderWidth: 1, borderColor: '#ccc', borderRadius: 15, padding: 20, backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5, elevation: 3 },
+  inputBlock: { marginBottom: 20 },
+  label: { fontSize: 14, color: '#333', fontWeight: '600', marginBottom: 6 },
+  inputField: { fontSize: 16, color: '#000', backgroundColor: '#fff', paddingVertical: 12, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1, borderColor: '#ccc' },
+  inputRow: { flexDirection: "row", alignItems: "center", backgroundColor: "#fff", borderWidth: 1, borderColor: "#ccc", borderRadius: 10, paddingHorizontal: 10 },
+  passwordInput: { flex: 1, fontSize: 16, color: "#000", paddingVertical: 12, paddingHorizontal: 4 },
   linkText: {
-    color: "#000",
+    color: '#000',
     marginBottom: 20,
-    textAlign: "right",
-    fontWeight: "500",
+    textAlign: 'right',
+    fontWeight: '500'
   },
-  button: {
-    backgroundColor: "#000",
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    marginTop: 10,
-    marginBottom: 25,
-  },
-  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 18 },
-  bottomTextContainer: { alignItems: "center", marginTop: 10 },
-  bottomText: { fontSize: 14, color: "#555" },
-  signUpText: { color: "#000", fontWeight: "bold" },
+  button: { backgroundColor: '#000', padding: 15, borderRadius: 10, alignItems: 'center', marginTop: 10, marginBottom: 25 },
+  buttonText: { color: '#fff', fontWeight: 'bold', fontSize: 18 },
+   bottomTextContainer: { alignItems: 'center', marginTop: 10 },
+  bottomText: { fontSize: 14, color: '#555' },
+  signUpText: { color: '#000', fontWeight: 'bold' },
 });
