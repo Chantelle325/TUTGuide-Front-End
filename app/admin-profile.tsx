@@ -289,7 +289,7 @@ const ProfileScreen = () => {
               <Switch
                 value={voiceEnabled}
                 onValueChange={(val) => setVoiceEnabled(val)}
-                thumbColor="#000"
+                thumbColor={voiceEnabled ? "#4CAF50" : "#f4f3f4"}
                 trackColor={{ true: '#ccc', false: '#ccc' }}
               />
             </View>
@@ -298,7 +298,7 @@ const ProfileScreen = () => {
               <Switch
                 value={soundEnabled}
                 onValueChange={(val) => setSoundEnabled(val)}
-                thumbColor="black"
+                thumbColor={soundEnabled ? "#4CAF50" : "#f4f3f4"}
                 trackColor={{ true: '#ccc', false: '#ccc' }}
               />
             </View>
@@ -337,7 +337,7 @@ const ProfileScreen = () => {
               <ThemedText style={[styles.modalMessage, { color: darkMode ? '#ccc' : '#333' }]}>{modalConfig.message}</ThemedText>
               <View style={styles.modalButtons}>
                 {modalConfig.cancelText ? (
-                  <TouchableOpacity style={[styles.modalButton, { backgroundColor: '#ccc' }]} onPress={() => setModalVisible(false)}>
+                  <TouchableOpacity style={[styles.modalButton, { backgroundColor: '#000' }]} onPress={() => setModalVisible(false)}>
                     <ThemedText>{modalConfig.cancelText}</ThemedText>
                   </TouchableOpacity>
                 ) : null}
@@ -348,7 +348,7 @@ const ProfileScreen = () => {
                     setModalVisible(false);
                   }}
                 >
-                  <ThemedText style={{ color: 'white' }}>{modalConfig.confirmText}</ThemedText>
+                  <ThemedText style={{ color: 'black' }}>{modalConfig.confirmText}</ThemedText>
                 </TouchableOpacity>
               </View>
             </View>
